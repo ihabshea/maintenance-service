@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MaintenanceType {
+  preventive
+  corrective
+}
+
+enum TriggerMode {
+  mileage
+  time
+  both
+}
+
+enum TaskVehicleStatus {
+  open
+  completed
+  cancelled
+  rescheduled
+}
+
+enum JobStatus {
+  pending
+  done
+  skipped
+}
+
+enum ReferenceScope {
+  system
+  tenant
+}
+
+enum ReferenceStatus {
+  active
+  inactive
+}
+
+enum ReasonType {
+  cancellation
+}
+
+enum AuditEntityType {
+  task
+  task_vehicle
+  workshop
+  reason
+  attachment
+}
+
+model MaintenanceTask {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  title            String   @db.Text
+  maintenanceType  MaintenanceType @map("maintenance_type")
+  triggerMode      TriggerMode? @map("trigger_mode")
+  triggerKm        Int?     @map("trigger_km")
+  triggerDate      DateTime? @map("trigger_date") @db.Date
+  remindBeforeKm   Int?     @map("remind_before_km")
+  remindBeforeDays Int?     @map("remind_before_days")
+  notes            String?  @db.Text
+  createdBy        String   @map("created_by") @db.Text
+  sourceGroupId    String?  @map("source_group_id") @db.Uuid
+  selectionContext Json?    @map("selection_context") @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  vehicles         MaintenanceTaskVehicle[]
+  jobs             MaintenanceTaskJob[]
+  attachments      MaintenanceAttachment[]
+
+  @@index([tenantId])
+  @@index([tenantId, maintenanceType])
+  @@map("maintenance_tasks")
+}
+
+model MaintenanceTaskVehicle {
+  tenantId                   String   @map("tenant_id") @db.Uuid
+  taskId                     String   @map("task_id") @db.Uuid
+  vehicleId                  String   @map("vehicle_id") @db.Uuid
+  status                     TaskVehicleStatus @default(open)
+  dueOdometerKm              Int?     @map("due_odometer_km")
+  dueDate                    DateTime? @map("due_date") @db.Date
+  actualOdometerKm           Int?     @map("actual_odometer_km")
+  completionDate             DateTime? @map("completion_date") @db.Date
+  workshopId                 String?  @map("workshop_id") @db.Uuid
+  workshopCustom             String?  @map("workshop_custom") @db.Text
+  costAmount                 Decimal? @map("cost_amount") @db.Decimal(12, 2)
+  costCurrency               String   @default("EGP") @map("cost_currency") @db.Text
+  cancellationDate           DateTime? @map("cancellation_date") @db.Date
+  cancellationReasonId       String?  @map("cancellation_reason_id") @db.Uuid
+  cancellationReasonCustom   String?  @map("cancellation_reason_custom") @db.Text
+  rescheduleOriginalDueDate  DateTime? @map("reschedule_original_due_date") @db.Date
+  rescheduleNewDueDate       DateTime? @map("reschedule_new_due_date") @db.Date
+  rescheduleReason           String?  @map("reschedule_reason") @db.Text
+  rescheduleOdometerKm       Int?     @map("reschedule_odometer_km")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+
+  task                       MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  workshop                   Workshop? @relation(fields: [workshopId], references: [id])
+  cancellationReason         Reason? @relation(fields: [cancellationReasonId], references: [id])
+  vehicleJobs                MaintenanceTaskVehicleJob[]
+  attachments                MaintenanceAttachment[]
+
+  @@id([tenantId, taskId, vehicleId])
+  @@index([tenantId, vehicleId])
+  @@index([tenantId, status])
+  @@map("maintenance_task_vehicles")
+}
+
+model MaintenanceTaskJob {
+  tenantId  String @map("tenant_id") @db.Uuid
+  taskId    String @map("task_id") @db.Uuid
+  jobCode   String @map("job_code") @db.Text
+  label     String @db.Text
+  sortOrder Int    @map("sort_order")
+
+  task      MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  vehicleJobs MaintenanceTaskVehicleJob[]
+
+  @@id([tenantId, taskId, jobCode])
+  @@map("maintenance_task_jobs")
+}
+
+model MaintenanceTaskVehicleJob {
+  tenantId  String    @map("tenant_id") @db.Uuid
+  taskId    String    @map("task_id") @db.Uuid
+  vehicleId String    @map("vehicle_id") @db.Uuid
+  jobCode   String    @map("job_code") @db.Text
+  status    JobStatus @default(pending)
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  job       MaintenanceTaskJob @relation(fields: [tenantId, taskId, jobCode], references: [tenantId, taskId, jobCode], onDelete: Cascade)
+  vehicle   MaintenanceTaskVehicle @relation(fields: [tenantId, taskId, vehicleId], references: [tenantId, taskId, vehicleId], onDelete: Cascade)
+
+  @@id([tenantId, taskId, vehicleId, jobCode])
+  @@map("maintenance_task_vehicle_jobs")
+}
+
+model Workshop {
+  id        String          @id @default(uuid()) @db.Uuid
+  scope     ReferenceScope
+  tenantId  String?         @map("tenant_id") @db.Uuid
+  name      String          @db.Text
+  location  String?         @db.Text
+  status    ReferenceStatus @default(active)
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  taskVehicles MaintenanceTaskVehicle[]
+
+  @@index([tenantId])
+  @@index([scope])
+  @@map("workshops")
+}
+
+model Reason {
+  id         String          @id @default(uuid()) @db.Uuid
+  scope      ReferenceScope
+  tenantId   String?         @map("tenant_id") @db.Uuid
+  reasonType ReasonType      @map("reason_type")
+  label      String          @db.Text
+  status     ReferenceStatus @default(active)
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+
+  taskVehicles MaintenanceTaskVehicle[]
+
+  @@index([tenantId])
+  @@index([scope, reasonType])
+  @@map("reasons")
+}
+
+model MaintenanceAttachment {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  taskId      String   @map("task_id") @db.Uuid
+  vehicleId   String   @map("vehicle_id") @db.Uuid
+  fileUrl     String   @map("file_url") @db.Text
+  fileType    String   @map("file_type") @db.Text
+  fileName    String?  @map("file_name") @db.Text
+  contentType String?  @map("content_type") @db.Text
+  uploadedBy  String   @map("uploaded_by") @db.Text
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+
+  task        MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  vehicle     MaintenanceTaskVehicle @relation(fields: [tenantId, taskId, vehicleId], references: [tenantId, taskId, vehicleId], onDelete: Cascade)
+
+  @@index([tenantId, taskId, vehicleId])
+  @@map("maintenance_attachments")
+}
+
+model MaintenanceAuditLog {
+  id            String          @id @default(uuid()) @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  entityType    AuditEntityType @map("entity_type")
+  entityId      String          @map("entity_id") @db.Uuid
+  action        String          @db.Text
+  actor         String          @db.Text
+  timestamp     DateTime        @default(now())
+  previousValue Json?           @map("previous_value") @db.JsonB
+  newValue      Json?           @map("new_value") @db.JsonB
+
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, timestamp])
+  @@map("maintenance_audit_log")
+}
