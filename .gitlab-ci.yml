@@ -1,0 +1,64 @@
+stages:
+  - lint
+  - test
+  - build
+
+variables:
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: maintenance_db_test
+  DATABASE_URL: postgresql://postgres:postgres@postgres:5432/maintenance_db_test?schema=public
+
+.node_template: &node_template
+  image: node:20-alpine
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+
+lint:
+  <<: *node_template
+  stage: lint
+  script:
+    - npm ci
+    - npm run lint
+  only:
+    - main
+    - develop
+    - merge_requests
+
+test:
+  <<: *node_template
+  stage: test
+  services:
+    - name: postgres:15-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: maintenance_db_test
+  script:
+    - npm ci
+    - npx prisma generate
+    - npx prisma migrate deploy
+    - npm run test
+    - npm run test:e2e
+  only:
+    - main
+    - develop
+    - merge_requests
+
+build:
+  <<: *node_template
+  stage: build
+  script:
+    - npm ci
+    - npx prisma generate
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  only:
+    - main
+    - develop

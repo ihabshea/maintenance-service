@@ -1,0 +1,67 @@
+# Vehicle Maintenance Service Context
+
+## Overview
+NestJS microservice for vehicle maintenance management with multi-tenant architecture.
+
+## Tech Stack
+- NestJS 10.x with TypeScript
+- PostgreSQL 15 via Prisma ORM
+- Redis (optional caching)
+- Docker Compose for local development
+
+## Key Design Decisions
+
+### Tenancy
+- All requests require X-Tenant-Id header (UUID)
+- TenantGuard validates and injects tenantId into request
+- All queries filter by tenantId
+- System-scoped reference data has tenantId = null
+
+### Data Model
+- maintenance_tasks: Task header with trigger config
+- maintenance_task_vehicles: Per-vehicle execution with status
+- maintenance_task_jobs: Checklist template per task
+- maintenance_task_vehicle_jobs: Per-vehicle job execution status
+- workshops, reasons: Reference data with system/tenant scope
+- maintenance_attachments: File metadata storage
+- maintenance_audit_log: Append-only audit trail
+
+### Status Model
+- Statuses: open, completed, cancelled, rescheduled
+- Overdue is derived at read time for preventive tasks
+- Status transitions only allowed from open
+- Corrections endpoint for modifying finalized records
+
+### API Structure
+- Base: /api
+- Tasks: /maintenance/tasks
+- Vehicles: /vehicles/:vehicleId/maintenance
+- Status: /maintenance/tasks/:taskId/vehicles/:vehicleId/status/{completed|cancelled|rescheduled}
+- Reference: /reference/{workshops|reasons}
+- Attachments: /maintenance/tasks/:taskId/vehicles/:vehicleId/attachments
+
+## Commands
+- npm run start:dev - Start development server
+- npm run prisma:migrate:dev - Create/apply migrations
+- npm run prisma:seed - Seed reference data
+- npm run test - Run unit tests
+- npm run test:e2e - Run e2e tests
+
+## File Locations
+- Prisma schema: prisma/schema.prisma
+- DTOs: src/modules/*/dto/
+- Services: src/modules/*/*.service.ts
+- Controllers: src/modules/*/*.controller.ts
+- Guards: src/common/guards/
+- Decorators: src/common/decorators/
+
+## Integration Points
+- Gateway provides X-Tenant-Id and X-Actor headers
+- Odometer data comes from upstream vehicle service
+- File storage is external (we store metadata only)
+- Scheduling/notifications handled externally
+
+## Testing
+- Unit tests use Jest mocks for Prisma
+- E2E tests require running PostgreSQL
+- CI runs both with GitHub Actions
