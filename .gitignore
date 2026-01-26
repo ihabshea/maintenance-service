@@ -35,3 +35,6 @@ prisma/*.db-journal
 
 # Claude
 .claude
+
+# Contract test results
+test/contract/results.json
