@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiParam } from '@nestjs/swagger';
 import { AttachmentsService } from './attachments.service';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
 import { TenantId, Actor } from '../../common/decorators';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Attachments')
 @ApiHeader({ name: 'X-Tenant-Id', required: true })
@@ -37,12 +38,13 @@ export class AttachmentsController {
     @TenantId() tenantId: string,
     @Param('taskId') taskId: string,
     @Param('vehicleId') vehicleId: string,
+    @Query() query: PaginationQueryDto,
   ) {
-    const attachments = await this.attachmentsService.getAttachments(
+    return this.attachmentsService.getAttachments(
       tenantId,
       taskId,
       vehicleId,
+      query,
     );
-    return { data: attachments };
   }
 }

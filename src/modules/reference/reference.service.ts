@@ -3,7 +3,19 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateWorkshopDto, WorkshopScopeDto } from './dto/create-workshop.dto';
 import { CreateReasonDto } from './dto/create-reason.dto';
-import { ReferenceScope, ReasonType, ReferenceStatus } from '@prisma/client';
+import {
+  ReferenceScope,
+  ReasonType,
+  ReferenceStatus,
+  Workshop,
+  Reason,
+} from '@prisma/client';
+import {
+  PaginationQueryDto,
+  decodeCursor,
+  buildPaginatedResult,
+  PaginatedResult,
+} from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class ReferenceService {
@@ -12,14 +24,27 @@ export class ReferenceService {
     private readonly auditService: AuditService,
   ) {}
 
-  async getWorkshops(tenantId: string) {
-    return this.prisma.workshop.findMany({
+  async getWorkshops(
+    tenantId: string,
+    query: PaginationQueryDto,
+  ): Promise<PaginatedResult<Workshop>> {
+    const limit = query.limit ?? 20;
+    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+
+    const workshops = await this.prisma.workshop.findMany({
       where: {
         OR: [{ tenantId: null }, { tenantId }],
         status: 'active',
       },
       orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+      take: limit + 1,
+      ...(cursorData && {
+        skip: 1,
+        cursor: { id: cursorData.id },
+      }),
     });
+
+    return buildPaginatedResult(workshops, limit);
   }
 
   async getWorkshopById(id: string, tenantId: string) {
@@ -70,7 +95,14 @@ export class ReferenceService {
     return workshop;
   }
 
-  async getReasons(tenantId: string, reasonType?: string) {
+  async getReasons(
+    tenantId: string,
+    reasonType: string | undefined,
+    query: PaginationQueryDto,
+  ): Promise<PaginatedResult<Reason>> {
+    const limit = query.limit ?? 20;
+    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+
     const where: {
       OR: Array<{ tenantId: string | null }>;
       status: ReferenceStatus;
@@ -84,10 +116,17 @@ export class ReferenceService {
       where.reasonType = reasonType as ReasonType;
     }
 
-    return this.prisma.reason.findMany({
+    const reasons = await this.prisma.reason.findMany({
       where,
       orderBy: [{ scope: 'asc' }, { label: 'asc' }],
+      take: limit + 1,
+      ...(cursorData && {
+        skip: 1,
+        cursor: { id: cursorData.id },
+      }),
     });
+
+    return buildPaginatedResult(reasons, limit);
   }
 
   async getReasonById(id: string, tenantId: string) {

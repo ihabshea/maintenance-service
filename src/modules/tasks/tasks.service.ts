@@ -19,6 +19,11 @@ import {
 import { CorrectionDto } from './dto/correction.dto';
 import { VehicleMaintenanceQueryDto } from './dto/query.dto';
 import {
+  decodeCursor,
+  buildPaginatedResult,
+  PaginatedResult,
+} from '../../common/dto/pagination.dto';
+import {
   MaintenanceType,
   TriggerMode,
   TaskVehicleStatus,
@@ -298,7 +303,10 @@ export class TasksService {
     tenantId: string,
     vehicleId: string,
     query: VehicleMaintenanceQueryDto,
-  ) {
+  ): Promise<PaginatedResult<Record<string, unknown>>> {
+    const limit = query.limit ?? 20;
+    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+
     const where: {
       tenantId: string;
       vehicleId: string;
@@ -328,12 +336,23 @@ export class TasksService {
         cancellationReason: true,
       },
       orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      ...(cursorData && {
+        skip: 1,
+        cursor: {
+          tenantId_taskId_vehicleId: {
+            tenantId,
+            taskId: cursorData.id,
+            vehicleId,
+          },
+        },
+      }),
     });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return vehicleTasks.map((vt) => {
+    const mappedResults = vehicleTasks.map((vt) => {
       let overdue: boolean | null = null;
       let overdueComputation:
         | 'computed'
@@ -353,11 +372,14 @@ export class TasksService {
       }
 
       return {
+        id: vt.taskId,
         ...vt,
         overdue,
         overdueComputation,
       };
     });
+
+    return buildPaginatedResult(mappedResults, limit);
   }
 
   async completeVehicle(

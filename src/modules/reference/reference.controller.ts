@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query, Headers } from '@nestjs/common';
-import { ApiTags, ApiHeader, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiHeader } from '@nestjs/swagger';
 import { ReferenceService } from './reference.service';
 import {
   CreateWorkshopDto,
@@ -7,7 +7,9 @@ import {
   WorkshopScopeDto,
 } from './dto/create-workshop.dto';
 import { CreateReasonDto } from './dto/create-reason.dto';
+import { ReasonsQueryDto } from './dto/query.dto';
 import { TenantId, Actor } from '../../common/decorators';
+import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Reference Data')
 @ApiHeader({ name: 'X-Tenant-Id', required: true })
@@ -16,9 +18,11 @@ export class ReferenceController {
   constructor(private readonly referenceService: ReferenceService) {}
 
   @Get('workshops')
-  async getWorkshops(@TenantId() tenantId: string) {
-    const workshops = await this.referenceService.getWorkshops(tenantId);
-    return { data: workshops };
+  async getWorkshops(
+    @TenantId() tenantId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.referenceService.getWorkshops(tenantId, query);
   }
 
   @Post('workshops')
@@ -43,10 +47,11 @@ export class ReferenceController {
   }
 
   @Get('reasons')
-  @ApiQuery({ name: 'type', required: false, enum: ['cancellation'] })
-  async getReasons(@TenantId() tenantId: string, @Query('type') type?: string) {
-    const reasons = await this.referenceService.getReasons(tenantId, type);
-    return { data: reasons };
+  async getReasons(
+    @TenantId() tenantId: string,
+    @Query() query: ReasonsQueryDto,
+  ) {
+    return this.referenceService.getReasons(tenantId, query.type, query);
   }
 
   @Post('reasons')

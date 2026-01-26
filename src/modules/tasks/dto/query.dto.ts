@@ -1,6 +1,8 @@
 import { IsOptional, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MaintenanceTypeDto } from './create-task.dto';
+import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
+import { IntersectionType } from '@nestjs/swagger';
 
 export enum TaskVehicleStatusDto {
   open = 'open',
@@ -9,7 +11,7 @@ export enum TaskVehicleStatusDto {
   rescheduled = 'rescheduled',
 }
 
-export class VehicleMaintenanceQueryDto {
+export class VehicleMaintenanceFilterDto {
   @ApiPropertyOptional({ enum: MaintenanceTypeDto })
   @IsOptional()
   @IsEnum(MaintenanceTypeDto)
@@ -20,3 +22,8 @@ export class VehicleMaintenanceQueryDto {
   @IsEnum(TaskVehicleStatusDto)
   status?: TaskVehicleStatusDto;
 }
+
+export class VehicleMaintenanceQueryDto extends IntersectionType(
+  VehicleMaintenanceFilterDto,
+  PaginationQueryDto,
+) {}

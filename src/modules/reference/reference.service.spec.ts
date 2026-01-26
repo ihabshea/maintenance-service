@@ -43,7 +43,7 @@ describe('ReferenceService', () => {
   });
 
   describe('getWorkshops', () => {
-    it('should return system and tenant workshops', async () => {
+    it('should return system and tenant workshops with pagination', async () => {
       const mockWorkshops = [
         { id: '1', scope: 'system', tenantId: null, name: 'System Workshop' },
         {
@@ -56,7 +56,7 @@ describe('ReferenceService', () => {
 
       mockPrismaService.workshop.findMany.mockResolvedValue(mockWorkshops);
 
-      const result = await service.getWorkshops(mockTenantId);
+      const result = await service.getWorkshops(mockTenantId, { limit: 20 });
 
       expect(mockPrismaService.workshop.findMany).toHaveBeenCalledWith({
         where: {
@@ -64,8 +64,10 @@ describe('ReferenceService', () => {
           status: 'active',
         },
         orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+        take: 21,
       });
-      expect(result).toEqual(mockWorkshops);
+      expect(result.data).toEqual(mockWorkshops);
+      expect(result.pagination.hasMore).toBe(false);
     });
   });
 
@@ -128,7 +130,7 @@ describe('ReferenceService', () => {
   });
 
   describe('getReasons', () => {
-    it('should return filtered reasons by type', async () => {
+    it('should return filtered reasons by type with pagination', async () => {
       const mockReasons = [
         {
           id: '1',
@@ -140,7 +142,7 @@ describe('ReferenceService', () => {
 
       mockPrismaService.reason.findMany.mockResolvedValue(mockReasons);
 
-      const result = await service.getReasons(mockTenantId, 'cancellation');
+      const result = await service.getReasons(mockTenantId, 'cancellation', { limit: 20 });
 
       expect(mockPrismaService.reason.findMany).toHaveBeenCalledWith({
         where: {
@@ -149,8 +151,10 @@ describe('ReferenceService', () => {
           reasonType: 'cancellation',
         },
         orderBy: [{ scope: 'asc' }, { label: 'asc' }],
+        take: 21,
       });
-      expect(result).toEqual(mockReasons);
+      expect(result.data).toEqual(mockReasons);
+      expect(result.pagination.hasMore).toBe(false);
     });
   });
 

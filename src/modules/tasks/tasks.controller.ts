@@ -64,12 +64,7 @@ export class TasksController {
     @Param('vehicleId') vehicleId: string,
     @Query() query: VehicleMaintenanceQueryDto,
   ) {
-    const tasks = await this.tasksService.getVehicleMaintenance(
-      tenantId,
-      vehicleId,
-      query,
-    );
-    return { data: tasks };
+    return this.tasksService.getVehicleMaintenance(tenantId, vehicleId, query);
   }
 
   @Patch('maintenance/tasks/:taskId/vehicles/:vehicleId/status/completed')

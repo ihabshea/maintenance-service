@@ -406,7 +406,7 @@ describe('TasksService', () => {
       const result = await service.getVehicleMaintenance(
         mockTenantId,
         mockVehicleId,
-        {},
+        { limit: 20 },
       );
 
       expect(prisma.maintenanceTaskVehicle.findMany).toHaveBeenCalledWith(
@@ -416,7 +416,8 @@ describe('TasksService', () => {
           }),
         }),
       );
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.pagination.hasMore).toBe(false);
     });
   });
 });
