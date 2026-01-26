@@ -1,6 +1,25 @@
+# Vehicle Maintenance Service - Docker Compose
+#
+# This file provides local development infrastructure.
+#
+# Usage:
+#   docker-compose up -d      # Start services in background
+#   docker-compose down       # Stop services
+#   docker-compose logs -f    # View logs
+#
+# Port Mappings (to avoid conflicts with other services):
+#   - PostgreSQL: 5434 (host) -> 5432 (container)
+#   - Redis: 6381 (host) -> 6379 (container)
+#
+# Data Persistence:
+#   Data is persisted in named volumes (postgres_data, redis_data).
+#   To reset: docker-compose down -v && docker-compose up -d
+
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  # Connection: postgresql://postgres:postgres@localhost:5434/maintenance_db
   postgres:
     image: postgres:15-alpine
     container_name: maintenance-postgres
@@ -9,8 +28,10 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: maintenance_db
     ports:
-      - '5432:5432'
+      # Host port 5434 to avoid conflict with default PostgreSQL
+      - '5434:5432'
     volumes:
+      # Named volume for data persistence across restarts
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
@@ -18,12 +39,16 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis Cache (optional, for future caching needs)
+  # Connection: redis://localhost:6381
   redis:
     image: redis:7-alpine
     container_name: maintenance-redis
     ports:
-      - '6379:6379'
+      # Host port 6381 to avoid conflict with default Redis
+      - '6381:6379'
     volumes:
+      # Named volume for data persistence
       - redis_data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
@@ -31,6 +56,7 @@ services:
       timeout: 5s
       retries: 5
 
+# Named volumes for data persistence
 volumes:
   postgres_data:
   redis_data:
