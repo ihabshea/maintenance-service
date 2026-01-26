@@ -6,7 +6,7 @@ import { AppModule } from '../src/app.module';
 describe('Maintenance Service (e2e)', () => {
   let app: INestApplication;
 
-  const tenantId = '11111111-1111-1111-1111-111111111111';
+  const tenantId = 'a1111111-1111-4111-8111-111111111111';
   const headers = { 'X-Tenant-Id': tenantId, 'X-Actor': 'test-user' };
 
   beforeAll(async () => {
@@ -90,7 +90,7 @@ describe('Maintenance Service (e2e)', () => {
 
   describe('Maintenance Tasks', () => {
     let taskId: string;
-    const vehicleId = '22222222-2222-2222-2222-222222222222';
+    const vehicleId = 'b2222222-2222-4222-8222-222222222222';
 
     it('POST /api/maintenance/tasks - should create task with vehicles', async () => {
       const response = await request(app.getHttpServer())
@@ -130,7 +130,7 @@ describe('Maintenance Service (e2e)', () => {
     });
 
     it('POST /api/maintenance/tasks/:taskId/vehicles - should add vehicles', async () => {
-      const newVehicleId = '33333333-3333-3333-3333-333333333333';
+      const newVehicleId = 'c3333333-3333-4333-8333-333333333333';
 
       await request(app.getHttpServer())
         .post(`/api/maintenance/tasks/${taskId}/vehicles`)
@@ -203,7 +203,7 @@ describe('Maintenance Service (e2e)', () => {
 
   describe('Attachments', () => {
     let taskId: string;
-    const vehicleId = '44444444-4444-4444-4444-444444444444';
+    const vehicleId = 'd4444444-4444-4444-8444-444444444444';
 
     beforeAll(async () => {
       const response = await request(app.getHttpServer())
@@ -247,6 +247,93 @@ describe('Maintenance Service (e2e)', () => {
       expect(response.body.data).toBeDefined();
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Reports', () => {
+    it('GET /api/reports/maintenance-status - should return maintenance status report', () => {
+      return request(app.getHttpServer())
+        .get('/api/reports/maintenance-status')
+        .set(headers)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+          expect(res.body.data.completed).toBeDefined();
+          expect(res.body.data.cancelled).toBeDefined();
+          expect(res.body.data.rescheduled).toBeDefined();
+          expect(Array.isArray(res.body.data.completed)).toBe(true);
+          expect(Array.isArray(res.body.data.cancelled)).toBe(true);
+          expect(Array.isArray(res.body.data.rescheduled)).toBe(true);
+        });
+    });
+
+    it('GET /api/reports/overdue-preventive - should return overdue preventive report', () => {
+      return request(app.getHttpServer())
+        .get('/api/reports/overdue-preventive')
+        .set(headers)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+          expect(Array.isArray(res.body.data)).toBe(true);
+        });
+    });
+
+    it('GET /api/reports/cost-summary - should return cost summary report', () => {
+      return request(app.getHttpServer())
+        .get('/api/reports/cost-summary')
+        .set(headers)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+          expect(typeof res.body.data.totalCost).toBe('number');
+          expect(typeof res.body.data.totalCount).toBe('number');
+          expect(typeof res.body.data.averageCost).toBe('number');
+          expect(Array.isArray(res.body.data.byStatus)).toBe(true);
+        });
+    });
+
+    it('GET /api/reports/corrective-vs-preventive - should return comparison report', () => {
+      return request(app.getHttpServer())
+        .get('/api/reports/corrective-vs-preventive')
+        .set(headers)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+          expect(res.body.data.preventive).toBeDefined();
+          expect(res.body.data.corrective).toBeDefined();
+          expect(res.body.data.ratio).toBeDefined();
+          expect(typeof res.body.data.preventive.count).toBe('number');
+          expect(typeof res.body.data.corrective.count).toBe('number');
+        });
+    });
+
+    it('GET /api/reports/maintenance-status - should filter by date range', () => {
+      return request(app.getHttpServer())
+        .get('/api/reports/maintenance-status')
+        .query({ fromDate: '2025-01-01', toDate: '2025-12-31' })
+        .set(headers)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+        });
+    });
+
+    it('GET /api/reports/cost-summary - should filter by vehicle', () => {
+      const vehicleId = 'b2222222-2222-4222-8222-222222222222';
+      return request(app.getHttpServer())
+        .get('/api/reports/cost-summary')
+        .query({ vehicleId })
+        .set(headers)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toBeDefined();
+        });
+    });
+
+    it('should reject reports requests without tenant ID', () => {
+      return request(app.getHttpServer())
+        .get('/api/reports/maintenance-status')
+        .expect(400);
     });
   });
 
