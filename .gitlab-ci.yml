@@ -8,6 +8,7 @@ variables:
   POSTGRES_PASSWORD: postgres
   POSTGRES_DB: maintenance_db_test
   DATABASE_URL: postgresql://postgres:postgres@postgres:5432/maintenance_db_test?schema=public
+  NODE_ENV: test
 
 .node_template: &node_template
   image: node:20-alpine
@@ -15,21 +16,12 @@ variables:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
       - node_modules/
+      - .yarn/cache/
+  before_script:
+    - yarn install --frozen-lockfile
 
-lint:
+.test_template: &test_template
   <<: *node_template
-  stage: lint
-  script:
-    - npm ci
-    - npm run lint
-  only:
-    - main
-    - develop
-    - merge_requests
-
-test:
-  <<: *node_template
-  stage: test
   services:
     - name: postgres:15-alpine
       alias: postgres
@@ -37,28 +29,93 @@ test:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
     POSTGRES_DB: maintenance_db_test
-  script:
-    - npm ci
-    - npx prisma generate
-    - npx prisma migrate deploy
-    - npm run test
-    - npm run test:e2e
-  only:
-    - main
-    - develop
-    - merge_requests
+  before_script:
+    - yarn install --frozen-lockfile
+    - yarn prisma generate
+    - yarn prisma migrate deploy
 
+# Stage: Lint
+lint:
+  <<: *node_template
+  stage: lint
+  script:
+    - yarn lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+format:check:
+  <<: *node_template
+  stage: lint
+  script:
+    - yarn format --check
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+  allow_failure: true
+
+# Stage: Test
+test:unit:
+  <<: *test_template
+  stage: test
+  script:
+    - yarn test --coverage
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
+  artifacts:
+    when: always
+    paths:
+      - coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+test:e2e:
+  <<: *test_template
+  stage: test
+  script:
+    - yarn prisma:seed
+    - yarn test:e2e
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+test:contract:
+  <<: *test_template
+  stage: test
+  script:
+    - yarn prisma:seed
+    - yarn test:contract
+  artifacts:
+    when: always
+    paths:
+      - test/contract/results.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# Stage: Build
 build:
   <<: *node_template
   stage: build
   script:
-    - npm ci
-    - npx prisma generate
-    - npm run build
+    - yarn prisma generate
+    - yarn build
   artifacts:
     paths:
       - dist/
+      - node_modules/.prisma/
     expire_in: 1 week
-  only:
-    - main
-    - develop
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
