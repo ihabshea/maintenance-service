@@ -78,7 +78,10 @@ describe('POST /api/maintenance/tasks', () => {
 
       assertCreated(response);
       const data = extractData<any>(response);
-      expect(data.selectionContext).toEqual({ fleetId: 'fleet-123', region: 'MENA' });
+      expect(data.selectionContext).toEqual({
+        fleetId: 'fleet-123',
+        region: 'MENA',
+      });
       expect(data.sourceGroupId).toBe(UUIDS.tasks.TASK_1);
     });
 
@@ -165,7 +168,12 @@ describe('POST /api/maintenance/tasks', () => {
       assertCreated(response);
       const data = extractData<{ id: string }>(response);
 
-      await verifyCreateAudit(UUIDS.tenants.A, 'task', data.id, 'contract-test');
+      await verifyCreateAudit(
+        UUIDS.tenants.A,
+        'task',
+        data.id,
+        'contract-test',
+      );
     });
   });
 
@@ -185,7 +193,9 @@ describe('POST /api/maintenance/tasks', () => {
         .send(VALID_PAYLOADS.createTask.correctiveMinimal);
 
       assertCreated(response);
-      const data = extractData<{ createdAt: string; updatedAt: string }>(response);
+      const data = extractData<{ createdAt: string; updatedAt: string }>(
+        response,
+      );
 
       // Check ISO 8601 format
       expect(Date.parse(data.createdAt)).not.toBeNaN();

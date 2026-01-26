@@ -62,7 +62,9 @@ describe('X-Tenant-Id Header Validation', () => {
       });
 
       assertBadRequest(response);
-      expect(response.body.message).toContain('X-Tenant-Id must be a valid UUID');
+      expect(response.body.message).toContain(
+        'X-Tenant-Id must be a valid UUID',
+      );
     });
 
     it('should return 400 when X-Tenant-Id is a partial UUID', async () => {
@@ -71,7 +73,9 @@ describe('X-Tenant-Id Header Validation', () => {
       });
 
       assertBadRequest(response);
-      expect(response.body.message).toContain('X-Tenant-Id must be a valid UUID');
+      expect(response.body.message).toContain(
+        'X-Tenant-Id must be a valid UUID',
+      );
     });
 
     it('should return 400 when X-Tenant-Id contains spaces', async () => {
@@ -80,7 +84,9 @@ describe('X-Tenant-Id Header Validation', () => {
       });
 
       assertBadRequest(response);
-      expect(response.body.message).toContain('X-Tenant-Id must be a valid UUID');
+      expect(response.body.message).toContain(
+        'X-Tenant-Id must be a valid UUID',
+      );
     });
   });
 

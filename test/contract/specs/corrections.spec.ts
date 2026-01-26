@@ -51,13 +51,18 @@ describe('POST .../corrections', () => {
   describe('Happy Path', () => {
     it('should correct completed vehicle cost', async () => {
       // Create completed vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'completed',
-        completionDate: new Date('2025-01-15'),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Test Workshop',
-        costAmount: 150,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'completed',
+          completionDate: new Date('2025-01-15'),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Test Workshop',
+          costAmount: 150,
+        },
+      );
 
       const response = await http
         .post(API_PATHS.corrections(taskId, UUIDS.vehicles.V1))
@@ -77,12 +82,17 @@ describe('POST .../corrections', () => {
 
     it('should correct cancelled vehicle', async () => {
       // Create cancelled vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V2, {
-        status: 'cancelled',
-        cancellationDate: new Date('2025-01-15'),
-        actualOdometerKm: 49000,
-        cancellationReasonCustom: 'Original reason',
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V2,
+        {
+          status: 'cancelled',
+          cancellationDate: new Date('2025-01-15'),
+          actualOdometerKm: 49000,
+          cancellationReasonCustom: 'Original reason',
+        },
+      );
 
       const response = await http
         .post(API_PATHS.corrections(taskId, UUIDS.vehicles.V2))
@@ -98,13 +108,18 @@ describe('POST .../corrections', () => {
 
     it('should correct rescheduled vehicle', async () => {
       // Create rescheduled vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V3, {
-        status: 'rescheduled',
-        rescheduleOriginalDueDate: new Date('2025-01-01'),
-        rescheduleNewDueDate: new Date('2025-02-01'),
-        rescheduleOdometerKm: 48000,
-        rescheduleReason: 'Parts not available',
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V3,
+        {
+          status: 'rescheduled',
+          rescheduleOriginalDueDate: new Date('2025-01-01'),
+          rescheduleNewDueDate: new Date('2025-02-01'),
+          rescheduleOdometerKm: 48000,
+          rescheduleReason: 'Parts not available',
+        },
+      );
 
       const response = await http
         .post(API_PATHS.corrections(taskId, UUIDS.vehicles.V3))
@@ -120,13 +135,18 @@ describe('POST .../corrections', () => {
 
     it('should correct workshop reference', async () => {
       // Create completed vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V4, {
-        status: 'completed',
-        completionDate: new Date('2025-01-15'),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Wrong Workshop',
-        costAmount: 150,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V4,
+        {
+          status: 'completed',
+          completionDate: new Date('2025-01-15'),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Wrong Workshop',
+          costAmount: 150,
+        },
+      );
 
       const response = await http
         .post(API_PATHS.corrections(taskId, UUIDS.vehicles.V4))
@@ -139,13 +159,18 @@ describe('POST .../corrections', () => {
   describe('Validation Errors', () => {
     beforeEach(async () => {
       // Create completed vehicle for validation tests
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'completed',
-        completionDate: new Date('2025-01-15'),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Test Workshop',
-        costAmount: 150,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'completed',
+          completionDate: new Date('2025-01-15'),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Test Workshop',
+          costAmount: 150,
+        },
+      );
     });
 
     it('should reject missing correctionReason', async () => {
@@ -177,10 +202,15 @@ describe('POST .../corrections', () => {
   describe('Immutability', () => {
     it('should reject correction of open vehicle', async () => {
       // Create open vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'open',
-        dueOdometerKm: 50000,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'open',
+          dueOdometerKm: 50000,
+        },
+      );
 
       const response = await http
         .post(API_PATHS.corrections(taskId, UUIDS.vehicles.V1))
@@ -191,23 +221,26 @@ describe('POST .../corrections', () => {
 
     it('should not change status field via correction', async () => {
       // Create completed vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'completed',
-        completionDate: new Date('2025-01-15'),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Test Workshop',
-        costAmount: 150,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'completed',
+          completionDate: new Date('2025-01-15'),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Test Workshop',
+          costAmount: 150,
+        },
+      );
 
       // Try to change status (should be ignored or rejected)
-      const response = await http
-        .post(API_PATHS.corrections(taskId, UUIDS.vehicles.V1))
-        .send({
-          correctionReason: 'Try to change status',
-          patch: {
-            status: 'open',
-          },
-        });
+      await http.post(API_PATHS.corrections(taskId, UUIDS.vehicles.V1)).send({
+        correctionReason: 'Try to change status',
+        patch: {
+          status: 'open',
+        },
+      });
 
       // Status should remain completed
       const vehicle = await getTaskVehicleDirect(
@@ -240,13 +273,18 @@ describe('POST .../corrections', () => {
   describe('Audit Logging', () => {
     it('should create audit log with correctionReason in newValue', async () => {
       // Create completed vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'completed',
-        completionDate: new Date('2025-01-15'),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Test Workshop',
-        costAmount: 150,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'completed',
+          completionDate: new Date('2025-01-15'),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Test Workshop',
+          costAmount: 150,
+        },
+      );
 
       await http
         .post(API_PATHS.corrections(taskId, UUIDS.vehicles.V1))

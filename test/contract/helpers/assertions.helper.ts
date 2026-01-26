@@ -7,7 +7,10 @@ import { HttpResponse } from './http.helper';
 /**
  * Asserts the response has the expected status code.
  */
-export function assertStatus(response: HttpResponse, expectedStatus: number): void {
+export function assertStatus(
+  response: HttpResponse,
+  expectedStatus: number,
+): void {
   expect(response.status).toBe(expectedStatus);
 }
 
@@ -29,7 +32,10 @@ export function assertDataIsArray(response: HttpResponse): void {
 /**
  * Asserts the response data array has the expected length.
  */
-export function assertDataArrayLength(response: HttpResponse, length: number): void {
+export function assertDataArrayLength(
+  response: HttpResponse,
+  length: number,
+): void {
   assertDataIsArray(response);
   expect(response.body.data.length).toBe(length);
 }
@@ -90,7 +96,10 @@ export function assertDataField<T>(
 /**
  * Asserts a nested field exists in the data.
  */
-export function assertDataHasField(response: HttpResponse, field: string): void {
+export function assertDataHasField(
+  response: HttpResponse,
+  field: string,
+): void {
   assertHasData(response);
   expect(response.body.data).toHaveProperty(field);
 }
@@ -98,7 +107,10 @@ export function assertDataHasField(response: HttpResponse, field: string): void 
 /**
  * Asserts the response data contains all expected fields.
  */
-export function assertDataHasFields(response: HttpResponse, fields: string[]): void {
+export function assertDataHasFields(
+  response: HttpResponse,
+  fields: string[],
+): void {
   assertHasData(response);
   fields.forEach((field) => {
     expect(response.body.data).toHaveProperty(field);
@@ -139,7 +151,10 @@ export function assertTaskStructure(response: HttpResponse): void {
 /**
  * Asserts the task response includes vehicles.
  */
-export function assertTaskHasVehicles(response: HttpResponse, count?: number): void {
+export function assertTaskHasVehicles(
+  response: HttpResponse,
+  count?: number,
+): void {
   assertTaskStructure(response);
   expect(response.body.data).toHaveProperty('vehicles');
   expect(Array.isArray(response.body.data.vehicles)).toBe(true);
@@ -151,7 +166,10 @@ export function assertTaskHasVehicles(response: HttpResponse, count?: number): v
 /**
  * Asserts the task response includes jobs.
  */
-export function assertTaskHasJobs(response: HttpResponse, count?: number): void {
+export function assertTaskHasJobs(
+  response: HttpResponse,
+  count?: number,
+): void {
   assertTaskStructure(response);
   expect(response.body.data).toHaveProperty('jobs');
   expect(Array.isArray(response.body.data.jobs)).toBe(true);

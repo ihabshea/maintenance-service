@@ -58,10 +58,15 @@ describe('GET /api/vehicles/:vehicleId/maintenance', () => {
         title: 'Oil Change',
         maintenanceType: 'preventive',
       });
-      await createTaskVehicleDirect(UUIDS.tenants.A, task.id, UUIDS.vehicles.V1, {
-        status: 'open',
-        dueOdometerKm: 50000,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        task.id,
+        UUIDS.vehicles.V1,
+        {
+          status: 'open',
+          dueOdometerKm: 50000,
+        },
+      );
 
       const response = await http.get(
         API_PATHS.vehicleMaintenance(UUIDS.vehicles.V1),
@@ -86,8 +91,16 @@ describe('GET /api/vehicles/:vehicleId/maintenance', () => {
         maintenanceType: 'corrective',
       });
 
-      await createTaskVehicleDirect(UUIDS.tenants.A, task1.id, UUIDS.vehicles.V1);
-      await createTaskVehicleDirect(UUIDS.tenants.A, task2.id, UUIDS.vehicles.V1);
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        task1.id,
+        UUIDS.vehicles.V1,
+      );
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        task2.id,
+        UUIDS.vehicles.V1,
+      );
 
       const response = await http.get(
         API_PATHS.vehicleMaintenance(UUIDS.vehicles.V1),
@@ -205,14 +218,22 @@ describe('GET /api/vehicles/:vehicleId/maintenance', () => {
         title: 'Tenant A Task',
         maintenanceType: 'preventive',
       });
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskA.id, UUIDS.vehicles.V1);
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskA.id,
+        UUIDS.vehicles.V1,
+      );
 
       // Create task for tenant B with same vehicle ID
       const taskB = await createTaskDirect(UUIDS.tenants.B, {
         title: 'Tenant B Task',
         maintenanceType: 'corrective',
       });
-      await createTaskVehicleDirect(UUIDS.tenants.B, taskB.id, UUIDS.vehicles.V1);
+      await createTaskVehicleDirect(
+        UUIDS.tenants.B,
+        taskB.id,
+        UUIDS.vehicles.V1,
+      );
 
       // Query as tenant A
       http.setTenantId(UUIDS.tenants.A);
@@ -242,10 +263,15 @@ describe('GET /api/vehicles/:vehicleId/maintenance', () => {
         title: 'Test Task',
         maintenanceType: 'preventive',
       });
-      await createTaskVehicleDirect(UUIDS.tenants.A, task.id, UUIDS.vehicles.V1, {
-        dueOdometerKm: 50000,
-        dueDate: new Date('2025-06-01'),
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        task.id,
+        UUIDS.vehicles.V1,
+        {
+          dueOdometerKm: 50000,
+          dueDate: new Date('2025-06-01'),
+        },
+      );
 
       const response = await http.get(
         API_PATHS.vehicleMaintenance(UUIDS.vehicles.V1),

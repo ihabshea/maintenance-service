@@ -143,13 +143,18 @@ describe('PATCH .../status/cancelled', () => {
 
     it('should reject cancellation of completed vehicle', async () => {
       // Add completed vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V2, {
-        status: 'completed',
-        completionDate: new Date(),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Test',
-        costAmount: 100,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V2,
+        {
+          status: 'completed',
+          completionDate: new Date(),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Test',
+          costAmount: 100,
+        },
+      );
 
       const response = await http
         .patch(API_PATHS.cancelVehicle(taskId, UUIDS.vehicles.V2))
@@ -160,13 +165,18 @@ describe('PATCH .../status/cancelled', () => {
 
     it('should reject cancellation of rescheduled vehicle', async () => {
       // Add rescheduled vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V3, {
-        status: 'rescheduled',
-        rescheduleOriginalDueDate: new Date('2025-01-01'),
-        rescheduleNewDueDate: new Date('2025-02-01'),
-        rescheduleOdometerKm: 48000,
-        rescheduleReason: 'Test',
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V3,
+        {
+          status: 'rescheduled',
+          rescheduleOriginalDueDate: new Date('2025-01-01'),
+          rescheduleNewDueDate: new Date('2025-02-01'),
+          rescheduleOdometerKm: 48000,
+          rescheduleReason: 'Test',
+        },
+      );
 
       const response = await http
         .patch(API_PATHS.cancelVehicle(taskId, UUIDS.vehicles.V3))
@@ -194,7 +204,9 @@ describe('PATCH .../status/cancelled', () => {
 
     it('should return 404 for non-existent task', async () => {
       const response = await http
-        .patch(API_PATHS.cancelVehicle(UUIDS.nonExistent.TASK, UUIDS.vehicles.V1))
+        .patch(
+          API_PATHS.cancelVehicle(UUIDS.nonExistent.TASK, UUIDS.vehicles.V1),
+        )
         .send(VALID_PAYLOADS.cancelVehicle.withCustomReason);
 
       assertNotFound(response);

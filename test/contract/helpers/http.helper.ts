@@ -51,36 +51,28 @@ export class HttpClient {
    * Makes a GET request with tenant headers.
    */
   get(path: string): request.Test {
-    return request(this.app.getHttpServer())
-      .get(path)
-      .set(this.getHeaders());
+    return request(this.app.getHttpServer()).get(path).set(this.getHeaders());
   }
 
   /**
    * Makes a POST request with tenant headers.
    */
   post(path: string): request.Test {
-    return request(this.app.getHttpServer())
-      .post(path)
-      .set(this.getHeaders());
+    return request(this.app.getHttpServer()).post(path).set(this.getHeaders());
   }
 
   /**
    * Makes a PATCH request with tenant headers.
    */
   patch(path: string): request.Test {
-    return request(this.app.getHttpServer())
-      .patch(path)
-      .set(this.getHeaders());
+    return request(this.app.getHttpServer()).patch(path).set(this.getHeaders());
   }
 
   /**
    * Makes a PUT request with tenant headers.
    */
   put(path: string): request.Test {
-    return request(this.app.getHttpServer())
-      .put(path)
-      .set(this.getHeaders());
+    return request(this.app.getHttpServer()).put(path).set(this.getHeaders());
   }
 
   /**

@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { createTestApp, closeTestApp } from '../helpers/app.helper';
-import { HttpClient, API_PATHS, extractData } from '../helpers/http.helper';
+import { HttpClient, API_PATHS } from '../helpers/http.helper';
 import {
   assertOk,
   assertNotFound,
@@ -63,10 +63,15 @@ describe('GET /api/maintenance/tasks/:taskId', () => {
     });
 
     it('should return task with vehicles', async () => {
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        dueOdometerKm: 50000,
-        dueDate: new Date('2025-06-01'),
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          dueOdometerKm: 50000,
+          dueDate: new Date('2025-06-01'),
+        },
+      );
 
       const response = await http.get(API_PATHS.task(taskId));
 
@@ -118,10 +123,15 @@ describe('GET /api/maintenance/tasks/:taskId', () => {
       const pastDate = new Date();
       pastDate.setDate(pastDate.getDate() - 7); // 7 days ago
 
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'open',
-        dueDate: pastDate,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'open',
+          dueDate: pastDate,
+        },
+      );
 
       const response = await http.get(API_PATHS.task(taskId));
 
@@ -134,10 +144,15 @@ describe('GET /api/maintenance/tasks/:taskId', () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 30); // 30 days from now
 
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'open',
-        dueDate: futureDate,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'open',
+          dueDate: futureDate,
+        },
+      );
 
       const response = await http.get(API_PATHS.task(taskId));
 
@@ -147,10 +162,15 @@ describe('GET /api/maintenance/tasks/:taskId', () => {
     });
 
     it('should return insufficient_data when only dueOdometerKm is set', async () => {
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'open',
-        dueOdometerKm: 50000,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'open',
+          dueOdometerKm: 50000,
+        },
+      );
 
       const response = await http.get(API_PATHS.task(taskId));
 
@@ -160,14 +180,19 @@ describe('GET /api/maintenance/tasks/:taskId', () => {
     });
 
     it('should return not_applicable for completed vehicle', async () => {
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V1, {
-        status: 'completed',
-        dueDate: new Date('2025-01-01'),
-        completionDate: new Date('2025-01-15'),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Test Workshop',
-        costAmount: 100,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V1,
+        {
+          status: 'completed',
+          dueDate: new Date('2025-01-01'),
+          completionDate: new Date('2025-01-15'),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Test Workshop',
+          costAmount: 100,
+        },
+      );
 
       const response = await http.get(API_PATHS.task(taskId));
 

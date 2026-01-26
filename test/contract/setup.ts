@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { seedSystemData, seedTenantData, cleanupAllTestData } from './fixtures/seed';
+import {
+  seedSystemData,
+  seedTenantData,
+  cleanupAllTestData,
+} from './fixtures/seed';
 import { UUIDS } from './fixtures/uuids';
 
 const prisma = new PrismaClient({

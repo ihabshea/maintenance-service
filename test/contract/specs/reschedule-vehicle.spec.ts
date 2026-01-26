@@ -132,13 +132,18 @@ describe('PATCH .../status/rescheduled', () => {
 
     it('should reject rescheduling of completed vehicle', async () => {
       // Add completed vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V2, {
-        status: 'completed',
-        completionDate: new Date(),
-        actualOdometerKm: 50500,
-        workshopCustom: 'Test',
-        costAmount: 100,
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V2,
+        {
+          status: 'completed',
+          completionDate: new Date(),
+          actualOdometerKm: 50500,
+          workshopCustom: 'Test',
+          costAmount: 100,
+        },
+      );
 
       const response = await http
         .patch(API_PATHS.rescheduleVehicle(taskId, UUIDS.vehicles.V2))
@@ -149,12 +154,17 @@ describe('PATCH .../status/rescheduled', () => {
 
     it('should reject rescheduling of cancelled vehicle', async () => {
       // Add cancelled vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V3, {
-        status: 'cancelled',
-        cancellationDate: new Date(),
-        actualOdometerKm: 49000,
-        cancellationReasonCustom: 'Test',
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V3,
+        {
+          status: 'cancelled',
+          cancellationDate: new Date(),
+          actualOdometerKm: 49000,
+          cancellationReasonCustom: 'Test',
+        },
+      );
 
       const response = await http
         .patch(API_PATHS.rescheduleVehicle(taskId, UUIDS.vehicles.V3))
@@ -168,7 +178,10 @@ describe('PATCH .../status/rescheduled', () => {
     it('should return 404 for non-existent task', async () => {
       const response = await http
         .patch(
-          API_PATHS.rescheduleVehicle(UUIDS.nonExistent.TASK, UUIDS.vehicles.V1),
+          API_PATHS.rescheduleVehicle(
+            UUIDS.nonExistent.TASK,
+            UUIDS.vehicles.V1,
+          ),
         )
         .send(VALID_PAYLOADS.rescheduleVehicle.standard);
 

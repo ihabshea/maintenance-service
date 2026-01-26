@@ -152,7 +152,9 @@ describe('Attachments', () => {
     describe('Error Cases', () => {
       it('should return 404 for non-existent task', async () => {
         const response = await http
-          .post(API_PATHS.attachments(UUIDS.nonExistent.TASK, UUIDS.vehicles.V1))
+          .post(
+            API_PATHS.attachments(UUIDS.nonExistent.TASK, UUIDS.vehicles.V1),
+          )
           .send(VALID_PAYLOADS.createAttachment.minimal);
 
         assertNotFound(response);

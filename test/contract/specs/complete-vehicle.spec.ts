@@ -115,9 +115,8 @@ describe('PATCH .../status/completed', () => {
 
       assertOk(response);
 
-      // Verify by getting task
-      const taskResponse = await http.get(API_PATHS.task(taskId));
-      // Jobs should be marked as done
+      // Verify by getting task - jobs should be marked as done
+      await http.get(API_PATHS.task(taskId));
     });
   });
 
@@ -198,12 +197,17 @@ describe('PATCH .../status/completed', () => {
 
     it('should reject completion of cancelled vehicle', async () => {
       // Cancel the vehicle first
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V2, {
-        status: 'cancelled',
-        cancellationDate: new Date(),
-        actualOdometerKm: 49000,
-        cancellationReasonCustom: 'Test',
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V2,
+        {
+          status: 'cancelled',
+          cancellationDate: new Date(),
+          actualOdometerKm: 49000,
+          cancellationReasonCustom: 'Test',
+        },
+      );
 
       const response = await http
         .patch(API_PATHS.completeVehicle(taskId, UUIDS.vehicles.V2))
@@ -214,13 +218,18 @@ describe('PATCH .../status/completed', () => {
 
     it('should reject completion of rescheduled vehicle', async () => {
       // Add rescheduled vehicle
-      await createTaskVehicleDirect(UUIDS.tenants.A, taskId, UUIDS.vehicles.V3, {
-        status: 'rescheduled',
-        rescheduleOriginalDueDate: new Date('2025-01-01'),
-        rescheduleNewDueDate: new Date('2025-02-01'),
-        rescheduleOdometerKm: 48000,
-        rescheduleReason: 'Test',
-      });
+      await createTaskVehicleDirect(
+        UUIDS.tenants.A,
+        taskId,
+        UUIDS.vehicles.V3,
+        {
+          status: 'rescheduled',
+          rescheduleOriginalDueDate: new Date('2025-01-01'),
+          rescheduleNewDueDate: new Date('2025-02-01'),
+          rescheduleOdometerKm: 48000,
+          rescheduleReason: 'Test',
+        },
+      );
 
       const response = await http
         .patch(API_PATHS.completeVehicle(taskId, UUIDS.vehicles.V3))
@@ -247,7 +256,9 @@ describe('PATCH .../status/completed', () => {
 
     it('should return 404 for non-existent task', async () => {
       const response = await http
-        .patch(API_PATHS.completeVehicle(UUIDS.nonExistent.TASK, UUIDS.vehicles.V1))
+        .patch(
+          API_PATHS.completeVehicle(UUIDS.nonExistent.TASK, UUIDS.vehicles.V1),
+        )
         .send(VALID_PAYLOADS.completeVehicle.minimal);
 
       assertNotFound(response);

@@ -7,7 +7,9 @@ import { UUIDS } from '../fixtures/uuids';
  */
 export function getPrisma(): PrismaClient {
   if (!global.__PRISMA_TEST__) {
-    throw new Error('Prisma client not initialized. Ensure setup.ts runs first.');
+    throw new Error(
+      'Prisma client not initialized. Ensure setup.ts runs first.',
+    );
   }
   return global.__PRISMA_TEST__;
 }

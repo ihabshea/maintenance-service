@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { createTestApp, closeTestApp } from '../helpers/app.helper';
-import { HttpClient, API_PATHS, extractData } from '../helpers/http.helper';
+import { HttpClient, API_PATHS } from '../helpers/http.helper';
 import {
   assertCreated,
   assertBadRequest,
@@ -60,7 +60,9 @@ describe('POST /api/maintenance/tasks/:taskId/vehicles', () => {
       // Verify vehicle was added
       const taskResponse = await http.get(API_PATHS.task(taskId));
       expect(taskResponse.body.data.vehicles.length).toBe(1);
-      expect(taskResponse.body.data.vehicles[0].vehicleId).toBe(UUIDS.vehicles.V2);
+      expect(taskResponse.body.data.vehicles[0].vehicleId).toBe(
+        UUIDS.vehicles.V2,
+      );
       expect(taskResponse.body.data.vehicles[0].dueOdometerKm).toBe(60000);
     });
 

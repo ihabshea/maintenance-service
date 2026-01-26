@@ -14,11 +14,6 @@ interface JestTestResult {
   failureMessages?: string[];
 }
 
-interface JestTestSuite {
-  name: string;
-  tests: JestTestResult[];
-}
-
 interface JestResult {
   numTotalTests: number;
   numPassedTests: number;
@@ -46,15 +41,6 @@ interface EndpointCoverage {
   tests: string[];
 }
 
-interface Finding {
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  endpoint: string;
-  description: string;
-  expected: string;
-  actual: string;
-  reproduction: string;
-}
-
 // Output directory for reports
 const OUTPUT_DIR = path.join(process.env.HOME || '~', 'evas', 'tests');
 const INPUT_FILE = path.join(__dirname, '..', 'results.json');
@@ -77,10 +63,22 @@ function parseJestResults(): JestResult | null {
 
 function extractEndpointFromTestName(testName: string): string {
   const patterns = [
-    { regex: /POST \/api\/maintenance\/tasks$/, endpoint: 'POST /api/maintenance/tasks' },
-    { regex: /GET \/api\/maintenance\/tasks\/:taskId$/, endpoint: 'GET /api/maintenance/tasks/:taskId' },
-    { regex: /POST .*\/vehicles$/, endpoint: 'POST /api/maintenance/tasks/:taskId/vehicles' },
-    { regex: /GET \/api\/vehicles\/:vehicleId\/maintenance/, endpoint: 'GET /api/vehicles/:vehicleId/maintenance' },
+    {
+      regex: /POST \/api\/maintenance\/tasks$/,
+      endpoint: 'POST /api/maintenance/tasks',
+    },
+    {
+      regex: /GET \/api\/maintenance\/tasks\/:taskId$/,
+      endpoint: 'GET /api/maintenance/tasks/:taskId',
+    },
+    {
+      regex: /POST .*\/vehicles$/,
+      endpoint: 'POST /api/maintenance/tasks/:taskId/vehicles',
+    },
+    {
+      regex: /GET \/api\/vehicles\/:vehicleId\/maintenance/,
+      endpoint: 'GET /api/vehicles/:vehicleId/maintenance',
+    },
     { regex: /status\/completed/, endpoint: 'PATCH .../status/completed' },
     { regex: /status\/cancelled/, endpoint: 'PATCH .../status/cancelled' },
     { regex: /status\/rescheduled/, endpoint: 'PATCH .../status/rescheduled' },
@@ -107,8 +105,12 @@ function categorizeTest(testName: string | undefined): string {
   const lowerName = testName.toLowerCase();
 
   // Check specific categories FIRST (before defaulting to happy path)
-  if (lowerName.includes('validation') || lowerName.includes('reject') ||
-      lowerName.includes('invalid') || lowerName.includes('missing')) {
+  if (
+    lowerName.includes('validation') ||
+    lowerName.includes('reject') ||
+    lowerName.includes('invalid') ||
+    lowerName.includes('missing')
+  ) {
     return 'validation';
   }
   if (lowerName.includes('tenant') || lowerName.includes('isolation')) {
@@ -178,13 +180,18 @@ yarn test:contract:report
 }
 
 function generateSummary(results: JestResult): string {
-  const passRate = ((results.numPassedTests / results.numTotalTests) * 100).toFixed(1);
+  const passRate = (
+    (results.numPassedTests / results.numTotalTests) *
+    100
+  ).toFixed(1);
   const duration = results.testResults.reduce((sum, suite) => {
-    return sum + suite.assertionResults.reduce((s, t) => s + (t.duration || 0), 0);
+    return (
+      sum + suite.assertionResults.reduce((s, t) => s + (t.duration || 0), 0)
+    );
   }, 0);
 
-  const failedTests = results.testResults.flatMap(suite =>
-    suite.assertionResults.filter(t => t.status === 'failed')
+  const failedTests = results.testResults.flatMap((suite) =>
+    suite.assertionResults.filter((t) => t.status === 'failed'),
   );
 
   let findingsSection = '';
@@ -194,9 +201,13 @@ function generateSummary(results: JestResult): string {
 
 | Severity | Test | Issue |
 |----------|------|-------|
-${failedTests.slice(0, 10).map(t =>
-  `| High | ${t.name} | ${(t.failureMessages?.[0] || 'Unknown').substring(0, 80)}... |`
-).join('\n')}
+${failedTests
+  .slice(0, 10)
+  .map(
+    (t) =>
+      `| High | ${t.name} | ${(t.failureMessages?.[0] || 'Unknown').substring(0, 80)}... |`,
+  )
+  .join('\n')}
 `;
   }
 
@@ -223,10 +234,10 @@ ${results.numFailedTests === 0 ? '**All contract tests passed.**' : `**${results
 
 | Severity | Count |
 |----------|-------|
-| Critical | ${failedTests.filter(t => t.name.includes('tenant') || t.name.includes('security')).length} |
-| High | ${failedTests.filter(t => t.name.includes('validation') || t.name.includes('immutab')).length} |
-| Medium | ${failedTests.filter(t => t.name.includes('audit')).length} |
-| Low | ${failedTests.length - failedTests.filter(t => t.name.includes('tenant') || t.name.includes('security') || t.name.includes('validation') || t.name.includes('immutab') || t.name.includes('audit')).length} |
+| Critical | ${failedTests.filter((t) => t.name.includes('tenant') || t.name.includes('security')).length} |
+| High | ${failedTests.filter((t) => t.name.includes('validation') || t.name.includes('immutab')).length} |
+| Medium | ${failedTests.filter((t) => t.name.includes('audit')).length} |
+| Low | ${failedTests.length - failedTests.filter((t) => t.name.includes('tenant') || t.name.includes('security') || t.name.includes('validation') || t.name.includes('immutab') || t.name.includes('audit')).length} |
 ${findingsSection}
 `;
 }
@@ -261,7 +272,7 @@ function generateCoverageMatrix(results: JestResult): string {
     }
   }
 
-  const check = (val: boolean) => val ? 'Y' : '-';
+  const check = (val: boolean) => (val ? 'Y' : '-');
 
   return `# Coverage Matrix
 
@@ -271,9 +282,12 @@ Generated: ${new Date().toISOString()}
 
 | Endpoint | Happy | Validation | Tenancy | Audit | Immutability |
 |----------|-------|------------|---------|-------|--------------|
-${Object.values(endpoints).map(e =>
-  `| ${e.endpoint} | ${check(e.scenarios.happy)} | ${check(e.scenarios.validation)} | ${check(e.scenarios.tenancy)} | ${check(e.scenarios.audit)} | ${check(e.scenarios.immutability)} |`
-).join('\n')}
+${Object.values(endpoints)
+  .map(
+    (e) =>
+      `| ${e.endpoint} | ${check(e.scenarios.happy)} | ${check(e.scenarios.validation)} | ${check(e.scenarios.tenancy)} | ${check(e.scenarios.audit)} | ${check(e.scenarios.immutability)} |`,
+  )
+  .join('\n')}
 
 ## Legend
 
@@ -284,17 +298,17 @@ ${Object.values(endpoints).map(e =>
 
 | Endpoint | Test Count |
 |----------|------------|
-${Object.values(endpoints).map(e =>
-  `| ${e.endpoint} | ${e.tests.length} |`
-).join('\n')}
+${Object.values(endpoints)
+  .map((e) => `| ${e.endpoint} | ${e.tests.length} |`)
+  .join('\n')}
 `;
 }
 
 function generateFindings(results: JestResult): string {
-  const failedTests = results.testResults.flatMap(suite =>
+  const failedTests = results.testResults.flatMap((suite) =>
     suite.assertionResults
-      .filter(t => t.status === 'failed')
-      .map(t => ({ suite: suite.name, ...t }))
+      .filter((t) => t.status === 'failed')
+      .map((t) => ({ suite: suite.name, ...t })),
   );
 
   if (failedTests.length === 0) {
@@ -320,7 +334,9 @@ Generated: ${new Date().toISOString()}
 
 ## Detailed Findings
 
-${failedTests.map((test, index) => `
+${failedTests
+  .map(
+    (test, index) => `
 ### Finding #${index + 1}
 
 **Test:** ${test.name}
@@ -339,7 +355,9 @@ ${(test.failureMessages?.[0] || 'No error message').substring(0, 500)}
 **Proposed Fix:** Review implementation against documented behavior.
 
 ---
-`).join('\n')}
+`,
+  )
+  .join('\n')}
 `;
 }
 
@@ -374,18 +392,24 @@ yarn test:contract --json --outputFile=./test/contract/results.json
 
 ### Test Suites
 
-${results.testResults.map(suite => `
+${results.testResults
+  .map(
+    (suite) => `
 #### ${path.basename(suite.name)}
 
 Status: ${suite.status}
 
 | Test | Status | Duration |
 |------|--------|----------|
-${suite.assertionResults.map(t => {
-  const name = t.name || 'Unknown test';
-  return `| ${name.substring(0, 60)}${name.length > 60 ? '...' : ''} | ${t.status} | ${t.duration || 0}ms |`;
-}).join('\n')}
-`).join('\n')}
+${suite.assertionResults
+  .map((t) => {
+    const name = t.name || 'Unknown test';
+    return `| ${name.substring(0, 60)}${name.length > 60 ? '...' : ''} | ${t.status} | ${t.duration || 0}ms |`;
+  })
+  .join('\n')}
+`,
+  )
+  .join('\n')}
 
 ## Full JSON
 
@@ -402,7 +426,10 @@ ${JSON.stringify(results, null, 2).substring(0, 10000)}
 
 function generatePerEndpointReports(results: JestResult): Map<string, string> {
   const reports = new Map<string, string>();
-  const endpointTests: Record<string, Array<{ suite: string; test: JestTestResult }>> = {};
+  const endpointTests: Record<
+    string,
+    Array<{ suite: string; test: JestTestResult }>
+  > = {};
 
   for (const suite of results.testResults) {
     const endpoint = extractEndpointFromTestName(suite.name);
@@ -418,8 +445,8 @@ function generatePerEndpointReports(results: JestResult): Map<string, string> {
   }
 
   for (const [safeName, tests] of Object.entries(endpointTests)) {
-    const passed = tests.filter(t => t.test.status === 'passed').length;
-    const failed = tests.filter(t => t.test.status === 'failed').length;
+    const passed = tests.filter((t) => t.test.status === 'passed').length;
+    const failed = tests.filter((t) => t.test.status === 'failed').length;
 
     const content = `# ${safeName.replace(/-/g, ' ').toUpperCase()}
 
@@ -435,19 +462,27 @@ Generated: ${new Date().toISOString()}
 
 ## Test Cases
 
-${tests.map(({ test }) => `
+${tests
+  .map(
+    ({ test }) => `
 ### ${test.name}
 
 **Status:** ${test.status === 'passed' ? 'PASS' : 'FAIL'}
 **Duration:** ${test.duration || 0}ms
 
-${test.status === 'failed' ? `
+${
+  test.status === 'failed'
+    ? `
 **Error:**
 \`\`\`
 ${(test.failureMessages?.[0] || 'No error message').substring(0, 300)}
 \`\`\`
-` : ''}
-`).join('\n---\n')}
+`
+    : ''
+}
+`,
+  )
+  .join('\n---\n')}
 
 ## Example Request/Response
 
@@ -467,11 +502,15 @@ async function main(): Promise<void> {
   // Parse Jest results
   const results = parseJestResults();
   if (!results) {
-    console.error('No Jest results found. Run: yarn test:contract --json --outputFile=./test/contract/results.json');
+    console.error(
+      'No Jest results found. Run: yarn test:contract --json --outputFile=./test/contract/results.json',
+    );
     process.exit(1);
   }
 
-  console.log(`Found ${results.numTotalTests} tests (${results.numPassedTests} passed, ${results.numFailedTests} failed)\n`);
+  console.log(
+    `Found ${results.numTotalTests} tests (${results.numPassedTests} passed, ${results.numFailedTests} failed)\n`,
+  );
 
   // Ensure output directories
   ensureDirectory(OUTPUT_DIR);
