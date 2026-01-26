@@ -12,6 +12,25 @@ A NestJS microservice for managing vehicle maintenance tasks, supporting prevent
 - Complete audit logging
 - Multi-tenant data isolation
 
+## Quick Start
+
+```bash
+# 1. Install dependencies
+yarn install
+
+# 2. Start infrastructure (PostgreSQL on 5434, Redis on 6381)
+docker-compose up -d
+
+# 3. Run migrations and seed data
+yarn prisma:migrate:dev && yarn prisma:seed
+
+# 4. Start the service
+yarn start:dev
+
+# Service runs at http://localhost:3002
+# Swagger docs at http://localhost:3002/api/docs
+```
+
 ## Prerequisites
 
 - Node.js 20+
@@ -19,12 +38,43 @@ A NestJS microservice for managing vehicle maintenance tasks, supporting prevent
 - PostgreSQL 15+ (provided via Docker)
 - Redis 7+ (optional, provided via Docker)
 
+## Available Scripts
+
+### Development
+
+| Script | Description |
+|--------|-------------|
+| `yarn start:dev` | Start with hot-reload for development |
+| `yarn start:debug` | Start with debugger attached |
+| `yarn start:prod` | Start production build |
+| `yarn build` | Build the application |
+
+### Testing
+
+| Script | Description |
+|--------|-------------|
+| `yarn test` | Run unit tests |
+| `yarn test:e2e` | Run end-to-end tests |
+| `yarn test:cov` | Run tests with coverage report |
+| `yarn test:contract` | Run contract tests (API vs documentation) |
+| `yarn test:contract:report` | Generate contract test reports |
+
+### Database
+
+| Script | Description |
+|--------|-------------|
+| `yarn prisma:migrate:dev` | Create and apply migrations (dev) |
+| `yarn prisma:migrate:deploy` | Apply migrations (production) |
+| `yarn prisma:seed` | Seed reference data |
+| `yarn db:reset` | Reset database (drop, migrate, seed) |
+| `yarn prisma:studio` | Open Prisma Studio GUI |
+
 ## Local Setup
 
 ### 1. Clone and install dependencies
 
 ```bash
-npm install
+yarn install
 ```
 
 ### 2. Start infrastructure
@@ -33,7 +83,7 @@ npm install
 docker-compose up -d
 ```
 
-This starts PostgreSQL on port 5432 and Redis on port 6379.
+This starts PostgreSQL on port 5434 and Redis on port 6381.
 
 ### 3. Configure environment
 
