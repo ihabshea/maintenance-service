@@ -51,6 +51,7 @@ enum AuditEntityType {
   workshop
   reason
   attachment
+  upload
 }
 
 model MaintenanceTask {
@@ -210,4 +211,21 @@ model MaintenanceAuditLog {
   @@index([tenantId, entityType, entityId])
   @@index([tenantId, timestamp])
   @@map("maintenance_audit_log")
+}
+
+model Upload {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  objectKey   String    @map("object_key") @db.Text
+  fileUrl     String    @map("file_url") @db.Text
+  fileName    String    @map("file_name") @db.Text
+  contentType String    @map("content_type") @db.Text
+  fileSize    BigInt    @map("file_size")
+  uploadedBy  String    @map("uploaded_by") @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  claimedAt   DateTime? @map("claimed_at")
+
+  @@index([tenantId, claimedAt, createdAt])
+  @@index([tenantId, fileUrl])
+  @@map("uploads")
 }

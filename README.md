@@ -8,6 +8,7 @@ A NestJS microservice for managing vehicle maintenance tasks, supporting prevent
 - Status transitions: open, completed, cancelled, rescheduled
 - Corrections endpoint for modifying finalized records
 - Reference data management (workshops and cancellation reasons)
+- File uploads to MinIO object storage with automatic cleanup
 - File attachment metadata storage
 - Complete audit logging
 - Multi-tenant data isolation
@@ -18,7 +19,7 @@ A NestJS microservice for managing vehicle maintenance tasks, supporting prevent
 # 1. Install dependencies
 yarn install
 
-# 2. Start infrastructure (PostgreSQL on 5434, Redis on 6381)
+# 2. Start infrastructure (PostgreSQL on 5434, Redis on 6381, MinIO on 9000/9001)
 docker-compose up -d
 
 # 3. Run migrations and seed data
@@ -27,8 +28,9 @@ yarn prisma:migrate:dev && yarn prisma:seed
 # 4. Start the service
 yarn start:dev
 
-# Service runs at http://localhost:3002
-# Swagger docs at http://localhost:3002/api/docs
+# Service runs at http://localhost:3000
+# Swagger docs at http://localhost:3000/api/docs
+# MinIO console at http://localhost:9001 (minioadmin / minioadmin123)
 ```
 
 ## Prerequisites
@@ -37,6 +39,7 @@ yarn start:dev
 - Docker and Docker Compose
 - PostgreSQL 15+ (provided via Docker)
 - Redis 7+ (optional, provided via Docker)
+- MinIO (provided via Docker, for file uploads)
 
 ## Available Scripts
 
@@ -83,7 +86,10 @@ yarn install
 docker-compose up -d
 ```
 
-This starts PostgreSQL on port 5434 and Redis on port 6381.
+This starts:
+- PostgreSQL on port 5434
+- Redis on port 6381
+- MinIO on ports 9000 (API) and 9001 (Console)
 
 ### 3. Configure environment
 
@@ -93,11 +99,23 @@ cp .env.example .env
 
 Default `.env` contents:
 ```
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/maintenance_db?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5434/maintenance_db?schema=public"
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=6381
 PORT=3000
 NODE_ENV=development
+
+# MinIO Object Storage
+MINIO_ENDPOINT=localhost
+MINIO_PORT=9000
+MINIO_USE_SSL=false
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin123
+MINIO_BUCKET_NAME=maintenance-uploads
+
+# Upload Settings
+UPLOAD_MAX_FILE_SIZE_MB=10
+UPLOAD_RETENTION_HOURS=24
 ```
 
 ### 4. Run migrations
@@ -290,15 +308,43 @@ curl -X POST http://localhost:3000/api/reference/reasons \
   }'
 ```
 
+### File Uploads
+
+#### Upload File
+Upload a file to MinIO object storage. Returns a URL that can be used when creating attachments.
+```bash
+curl -X POST http://localhost:3000/api/uploads \
+  -H "X-Tenant-Id: 11111111-1111-1111-1111-111111111111" \
+  -H "X-Actor: user@example.com" \
+  -F "file=@/path/to/document.pdf"
+```
+
+Response:
+```json
+{
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "fileUrl": "http://localhost:9000/maintenance-uploads/11111111-1111-1111-1111-111111111111/550e8400-document.pdf",
+    "fileName": "document.pdf",
+    "contentType": "application/pdf",
+    "fileSize": 12345,
+    "createdAt": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+**Note:** Uploaded files are automatically cleaned up after 24 hours (configurable via `UPLOAD_RETENTION_HOURS`) unless they are "claimed" by creating an attachment that references the file URL.
+
 ### Attachments
 
-#### Upload Attachment Metadata
+#### Create Attachment
+Create an attachment metadata record. If the `fileUrl` was uploaded via `/api/uploads`, it will be marked as "claimed" and won't be deleted by the cleanup job.
 ```bash
 curl -X POST http://localhost:3000/api/maintenance/tasks/{taskId}/vehicles/{vehicleId}/attachments \
   -H "Content-Type: application/json" \
   -H "X-Tenant-Id: 11111111-1111-1111-1111-111111111111" \
   -d '{
-    "fileUrl": "https://storage.example.com/receipts/invoice-123.pdf",
+    "fileUrl": "http://localhost:9000/maintenance-uploads/11111111-1111-1111-1111-111111111111/550e8400-document.pdf",
     "fileType": "receipt",
     "fileName": "invoice-123.pdf",
     "contentType": "application/pdf"
@@ -362,7 +408,7 @@ The service does not call external odometer services. Current odometer should be
 
 1. **No authentication/RBAC**: The service assumes the gateway handles authentication and provides tenant context via headers.
 
-2. **No file storage**: Attachments endpoint stores metadata only. Actual file upload should be handled by a separate storage service.
+2. **File storage via MinIO**: File uploads are stored in MinIO object storage. Unclaimed uploads (not attached to a record) are automatically deleted after 24 hours.
 
 3. **No external integrations**: The service does not call external APIs. Odometer values are snapshots provided during operations.
 
@@ -381,6 +427,14 @@ The service does not call external odometer services. Current odometer should be
 | REDIS_PORT | Redis port | 6379 |
 | PORT | Application port | 3000 |
 | NODE_ENV | Environment mode | development |
+| MINIO_ENDPOINT | MinIO server hostname | localhost |
+| MINIO_PORT | MinIO API port | 9000 |
+| MINIO_USE_SSL | Use HTTPS for MinIO | false |
+| MINIO_ACCESS_KEY | MinIO access key | minioadmin |
+| MINIO_SECRET_KEY | MinIO secret key | minioadmin123 |
+| MINIO_BUCKET_NAME | Bucket for uploads | maintenance-uploads |
+| UPLOAD_MAX_FILE_SIZE_MB | Max upload size in MB | 10 |
+| UPLOAD_RETENTION_HOURS | Hours before unclaimed uploads are deleted | 24 |
 
 ## Project Structure
 
@@ -395,6 +449,7 @@ src/
     tasks/          # Maintenance tasks, vehicles, status transitions
     reference/      # Workshops, reasons
     attachments/    # Attachment metadata
+    uploads/        # File uploads to MinIO with automatic cleanup
     audit/          # Audit logging
   prisma/           # Prisma service
 prisma/

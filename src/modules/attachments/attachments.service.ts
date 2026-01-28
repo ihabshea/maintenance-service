@@ -1,6 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { UploadsService } from '../uploads/uploads.service';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
 import {
   PaginationQueryDto,
@@ -15,6 +21,8 @@ export class AttachmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    @Inject(forwardRef(() => UploadsService))
+    private readonly uploadsService: UploadsService,
   ) {}
 
   async createAttachment(
@@ -46,6 +54,8 @@ export class AttachmentsService {
         uploadedBy: actor,
       },
     });
+
+    await this.uploadsService.claimUpload(tenantId, dto.fileUrl);
 
     await this.auditService.log({
       tenantId,

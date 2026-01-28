@@ -9,7 +9,8 @@ export type AuditEntityType =
   | 'task_vehicle'
   | 'workshop'
   | 'reason'
-  | 'attachment';
+  | 'attachment'
+  | 'upload';
 
 export interface AuditLogEntry {
   action: string;

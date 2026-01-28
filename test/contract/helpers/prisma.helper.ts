@@ -227,3 +227,65 @@ export async function getLatestAuditLog(
     },
   });
 }
+
+/**
+ * Creates an upload directly in the database for test setup.
+ */
+export async function createUploadDirect(
+  tenantId: string,
+  data: {
+    id?: string;
+    objectKey: string;
+    fileUrl: string;
+    fileName: string;
+    contentType: string;
+    fileSize: number;
+    uploadedBy?: string;
+    claimedAt?: Date | null;
+  },
+): Promise<{ id: string }> {
+  const prisma = getPrisma();
+  return prisma.upload.create({
+    data: {
+      id: data.id,
+      tenantId,
+      objectKey: data.objectKey,
+      fileUrl: data.fileUrl,
+      fileName: data.fileName,
+      contentType: data.contentType,
+      fileSize: data.fileSize,
+      uploadedBy: data.uploadedBy || 'contract-test',
+      claimedAt: data.claimedAt,
+    },
+    select: { id: true },
+  });
+}
+
+/**
+ * Gets an upload from the database.
+ */
+export async function getUploadDirect(uploadId: string): Promise<{
+  id: string;
+  tenantId: string;
+  objectKey: string;
+  fileUrl: string;
+  fileName: string;
+  contentType: string;
+  fileSize: bigint;
+  claimedAt: Date | null;
+} | null> {
+  const prisma = getPrisma();
+  return prisma.upload.findUnique({
+    where: { id: uploadId },
+    select: {
+      id: true,
+      tenantId: true,
+      objectKey: true,
+      fileUrl: true,
+      fileName: true,
+      contentType: true,
+      fileSize: true,
+      claimedAt: true,
+    },
+  });
+}

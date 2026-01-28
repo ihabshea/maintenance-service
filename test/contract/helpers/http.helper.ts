@@ -160,6 +160,9 @@ export const API_PATHS = {
 
   // Swagger
   swagger: '/api/docs',
+
+  // Uploads
+  uploads: '/api/uploads',
 };
 
 /**

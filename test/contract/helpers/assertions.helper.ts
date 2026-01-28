@@ -226,6 +226,18 @@ export function assertAttachmentStructure(data: any): void {
 }
 
 /**
+ * Asserts the upload response has the correct structure.
+ */
+export function assertUploadStructure(data: any): void {
+  expect(data).toHaveProperty('id');
+  expect(data).toHaveProperty('fileUrl');
+  expect(data).toHaveProperty('fileName');
+  expect(data).toHaveProperty('contentType');
+  expect(data).toHaveProperty('fileSize');
+  expect(data).toHaveProperty('createdAt');
+}
+
+/**
  * Asserts overdue computation fields in vehicle.
  * Note: The API uses 'computed' instead of 'date_based' for the overdueComputation field.
  */

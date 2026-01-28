@@ -9,6 +9,15 @@ variables:
   POSTGRES_DB: maintenance_db_test
   DATABASE_URL: postgresql://postgres:postgres@postgres:5432/maintenance_db_test?schema=public
   NODE_ENV: test
+  # MinIO configuration
+  MINIO_ROOT_USER: minioadmin
+  MINIO_ROOT_PASSWORD: minioadmin123
+  MINIO_ENDPOINT: minio
+  MINIO_PORT: "9000"
+  MINIO_USE_SSL: "false"
+  MINIO_ACCESS_KEY: minioadmin
+  MINIO_SECRET_KEY: minioadmin123
+  MINIO_BUCKET_NAME: maintenance-uploads-test
 
 .node_template: &node_template
   image: node:20-bookworm-slim
@@ -26,6 +35,9 @@ variables:
   services:
     - name: postgres:15-alpine
       alias: postgres
+    - name: minio/minio:latest
+      alias: minio
+      command: ["server", "/data"]
   variables:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres

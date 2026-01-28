@@ -10,9 +10,11 @@
 # Port Mappings (to avoid conflicts with other services):
 #   - PostgreSQL: 5434 (host) -> 5432 (container)
 #   - Redis: 6381 (host) -> 6379 (container)
+#   - MinIO API: 9000 (host) -> 9000 (container)
+#   - MinIO Console: 9001 (host) -> 9001 (container)
 #
 # Data Persistence:
-#   Data is persisted in named volumes (postgres_data, redis_data).
+#   Data is persisted in named volumes (postgres_data, redis_data, minio_data).
 #   To reset: docker-compose down -v && docker-compose up -d
 
 version: '3.8'
@@ -56,7 +58,29 @@ services:
       timeout: 5s
       retries: 5
 
+  # MinIO Object Storage
+  # Console: http://localhost:9001 (login: minioadmin / minioadmin123)
+  # API: http://localhost:9000
+  minio:
+    image: minio/minio:latest
+    container_name: maintenance-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 # Named volumes for data persistence
 volumes:
   postgres_data:
   redis_data:
+  minio_data:

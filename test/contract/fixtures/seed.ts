@@ -135,6 +135,7 @@ export async function cleanupTenantData(
   await prisma.maintenanceTaskVehicle.deleteMany({ where: { tenantId } });
   await prisma.maintenanceTaskJob.deleteMany({ where: { tenantId } });
   await prisma.maintenanceTask.deleteMany({ where: { tenantId } });
+  await prisma.upload.deleteMany({ where: { tenantId } });
   // Keep tenant workshops and reasons for reference tests
 }
 
