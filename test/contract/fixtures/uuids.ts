@@ -1,11 +1,11 @@
 /**
- * Deterministic UUIDs for contract testing.
- * Using predictable UUIDs makes tests reproducible and debugging easier.
+ * Deterministic IDs for contract testing.
+ * Using predictable IDs makes tests reproducible and debugging easier.
  */
 export const UUIDS = {
   tenants: {
-    A: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    B: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    A: '1',
+    B: '2',
   },
   vehicles: {
     V1: '11111111-1111-4111-8111-111111111111',
@@ -40,9 +40,10 @@ export const UUIDS = {
   },
 };
 
-export const INVALID_UUIDS = {
-  NOT_UUID: 'not-a-uuid',
+export const INVALID_TENANT_IDS = {
+  NOT_NUMERIC: 'not-a-number',
   EMPTY: '',
-  PARTIAL: 'aaaaaaaa-aaaa-4aaa',
-  WITH_SPACES: 'aaaaaaaa aaaa 4aaa 8aaa aaaaaaaaaaaa',
+  DECIMAL: '1.5',
+  NEGATIVE: '-1',
+  WITH_SPACES: '1 2 3',
 };

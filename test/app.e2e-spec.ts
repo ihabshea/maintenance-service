@@ -6,7 +6,7 @@ import { AppModule } from '../src/app.module';
 describe('Maintenance Service (e2e)', () => {
   let app: INestApplication;
 
-  const tenantId = 'a1111111-1111-4111-8111-111111111111';
+  const tenantId = '1';
   const headers = { 'X-Tenant-Id': tenantId, 'X-Actor': 'test-user' };
 
   beforeAll(async () => {

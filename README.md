@@ -140,7 +140,7 @@ The service runs on http://localhost:3000
 
 ## Tenant ID
 
-All requests require the `X-Tenant-Id` header with a valid UUID. The gateway is expected to provide this header after authentication.
+All requests require the `X-Tenant-Id` header with a valid numeric tenant ID. The gateway is expected to provide this header after authentication.
 
 Example:
 ```

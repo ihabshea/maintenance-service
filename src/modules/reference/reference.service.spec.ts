@@ -8,7 +8,7 @@ import { ReasonTypeDto } from './dto/create-reason.dto';
 describe('ReferenceService', () => {
   let service: ReferenceService;
 
-  const mockTenantId = '00000000-0000-0000-0000-000000000001';
+  const mockTenantId = '1';
   const mockActor = 'test-user';
 
   const mockPrismaService = {
@@ -142,7 +142,9 @@ describe('ReferenceService', () => {
 
       mockPrismaService.reason.findMany.mockResolvedValue(mockReasons);
 
-      const result = await service.getReasons(mockTenantId, 'cancellation', { limit: 20 });
+      const result = await service.getReasons(mockTenantId, 'cancellation', {
+        limit: 20,
+      });
 
       expect(mockPrismaService.reason.findMany).toHaveBeenCalledWith({
         where: {

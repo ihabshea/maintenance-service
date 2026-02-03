@@ -56,7 +56,7 @@ enum AuditEntityType {
 
 model MaintenanceTask {
   id               String   @id @default(uuid()) @db.Uuid
-  tenantId         String   @map("tenant_id") @db.Uuid
+  tenantId         String   @map("tenant_id")
   title            String   @db.Text
   maintenanceType  MaintenanceType @map("maintenance_type")
   triggerMode      TriggerMode? @map("trigger_mode")
@@ -81,7 +81,7 @@ model MaintenanceTask {
 }
 
 model MaintenanceTaskVehicle {
-  tenantId                   String   @map("tenant_id") @db.Uuid
+  tenantId                   String   @map("tenant_id")
   taskId                     String   @map("task_id") @db.Uuid
   vehicleId                  String   @map("vehicle_id") @db.Uuid
   status                     TaskVehicleStatus @default(open)
@@ -116,7 +116,7 @@ model MaintenanceTaskVehicle {
 }
 
 model MaintenanceTaskJob {
-  tenantId  String @map("tenant_id") @db.Uuid
+  tenantId  String @map("tenant_id")
   taskId    String @map("task_id") @db.Uuid
   jobCode   String @map("job_code") @db.Text
   label     String @db.Text
@@ -130,7 +130,7 @@ model MaintenanceTaskJob {
 }
 
 model MaintenanceTaskVehicleJob {
-  tenantId  String    @map("tenant_id") @db.Uuid
+  tenantId  String    @map("tenant_id")
   taskId    String    @map("task_id") @db.Uuid
   vehicleId String    @map("vehicle_id") @db.Uuid
   jobCode   String    @map("job_code") @db.Text
@@ -147,7 +147,7 @@ model MaintenanceTaskVehicleJob {
 model Workshop {
   id        String          @id @default(uuid()) @db.Uuid
   scope     ReferenceScope
-  tenantId  String?         @map("tenant_id") @db.Uuid
+  tenantId  String?         @map("tenant_id")
   name      String          @db.Text
   location  String?         @db.Text
   status    ReferenceStatus @default(active)
@@ -164,7 +164,7 @@ model Workshop {
 model Reason {
   id         String          @id @default(uuid()) @db.Uuid
   scope      ReferenceScope
-  tenantId   String?         @map("tenant_id") @db.Uuid
+  tenantId   String?         @map("tenant_id")
   reasonType ReasonType      @map("reason_type")
   label      String          @db.Text
   status     ReferenceStatus @default(active)
@@ -180,7 +180,7 @@ model Reason {
 
 model MaintenanceAttachment {
   id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
+  tenantId    String   @map("tenant_id")
   taskId      String   @map("task_id") @db.Uuid
   vehicleId   String   @map("vehicle_id") @db.Uuid
   fileUrl     String   @map("file_url") @db.Text
@@ -199,7 +199,7 @@ model MaintenanceAttachment {
 
 model MaintenanceAuditLog {
   id            String          @id @default(uuid()) @db.Uuid
-  tenantId      String          @map("tenant_id") @db.Uuid
+  tenantId      String          @map("tenant_id")
   entityType    AuditEntityType @map("entity_type")
   entityId      String          @map("entity_id") @db.Uuid
   action        String          @db.Text
@@ -215,7 +215,7 @@ model MaintenanceAuditLog {
 
 model Upload {
   id          String    @id @default(uuid()) @db.Uuid
-  tenantId    String    @map("tenant_id") @db.Uuid
+  tenantId    String    @map("tenant_id")
   objectKey   String    @map("object_key") @db.Text
   fileUrl     String    @map("file_url") @db.Text
   fileName    String    @map("file_name") @db.Text

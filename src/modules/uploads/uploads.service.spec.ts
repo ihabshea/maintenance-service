@@ -7,7 +7,7 @@ import { MinioService } from './minio.service';
 describe('UploadsService', () => {
   let service: UploadsService;
 
-  const mockTenantId = '00000000-0000-0000-0000-000000000001';
+  const mockTenantId = '1';
   const mockUploadId = '00000000-0000-0000-0000-000000000002';
   const mockActor = 'test-user';
 

@@ -35,8 +35,8 @@ describe('UploadsCleanupService', () => {
   describe('cleanupOrphanedUploads', () => {
     it('should delete orphaned uploads', async () => {
       const mockOrphans = [
-        { id: '1', objectKey: 'test/file1.pdf', tenantId: 'tenant-1' },
-        { id: '2', objectKey: 'test/file2.pdf', tenantId: 'tenant-2' },
+        { id: '1', objectKey: 'test/file1.pdf', tenantId: '1' },
+        { id: '2', objectKey: 'test/file2.pdf', tenantId: '2' },
       ];
 
       mockUploadsService.findUnclaimedOlderThan.mockResolvedValue(mockOrphans);
@@ -58,9 +58,9 @@ describe('UploadsCleanupService', () => {
 
     it('should continue if individual delete fails', async () => {
       const mockOrphans = [
-        { id: '1', objectKey: 'test/file1.pdf', tenantId: 'tenant-1' },
-        { id: '2', objectKey: 'test/file2.pdf', tenantId: 'tenant-2' },
-        { id: '3', objectKey: 'test/file3.pdf', tenantId: 'tenant-3' },
+        { id: '1', objectKey: 'test/file1.pdf', tenantId: '1' },
+        { id: '2', objectKey: 'test/file2.pdf', tenantId: '2' },
+        { id: '3', objectKey: 'test/file3.pdf', tenantId: '3' },
       ];
 
       mockUploadsService.findUnclaimedOlderThan.mockResolvedValue(mockOrphans);

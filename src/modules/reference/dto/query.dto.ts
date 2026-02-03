@@ -5,7 +5,10 @@ import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 import { ReasonTypeDto } from './create-reason.dto';
 
 export class ReasonsFilterDto {
-  @ApiPropertyOptional({ enum: ReasonTypeDto, description: 'Filter by reason type' })
+  @ApiPropertyOptional({
+    enum: ReasonTypeDto,
+    description: 'Filter by reason type',
+  })
   @IsOptional()
   @IsEnum(ReasonTypeDto)
   type?: ReasonTypeDto;

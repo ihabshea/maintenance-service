@@ -5,8 +5,9 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { validate as isUuid } from 'uuid';
 import { SKIP_TENANT_CHECK } from '../decorators/skip-tenant-check.decorator';
+
+const NUMERIC_ID_PATTERN = /^\d+$/;
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -29,8 +30,10 @@ export class TenantGuard implements CanActivate {
       throw new BadRequestException('X-Tenant-Id header is required');
     }
 
-    if (!isUuid(tenantId)) {
-      throw new BadRequestException('X-Tenant-Id must be a valid UUID');
+    if (!NUMERIC_ID_PATTERN.test(tenantId)) {
+      throw new BadRequestException(
+        'X-Tenant-Id must be a valid numeric ID',
+      );
     }
 
     request.tenantId = tenantId;
