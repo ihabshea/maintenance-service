@@ -1,4 +1,4 @@
-import { IsOptional, IsDateString, IsUUID, IsEnum } from 'class-validator';
+import { IsOptional, IsDateString, IsInt, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MaintenanceTypeDto } from '../../tasks/dto/create-task.dto';
 import { TaskVehicleStatusDto } from '../../tasks/dto/query.dto';
@@ -16,8 +16,8 @@ export class ReportFiltersDto {
 
   @ApiPropertyOptional({ description: 'Filter by vehicle ID' })
   @IsOptional()
-  @IsUUID()
-  vehicleId?: string;
+  @IsInt()
+  vehicleId?: number;
 
   @ApiPropertyOptional({ enum: MaintenanceTypeDto })
   @IsOptional()

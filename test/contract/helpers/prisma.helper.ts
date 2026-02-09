@@ -66,7 +66,7 @@ export async function createTaskDirect(
 export async function createTaskVehicleDirect(
   tenantId: string,
   taskId: string,
-  vehicleId: string,
+  vehicleId: number,
   data?: {
     status?: 'open' | 'completed' | 'cancelled' | 'rescheduled';
     dueOdometerKm?: number;
@@ -140,7 +140,7 @@ export async function createTaskJobDirect(
 export async function getTaskVehicleDirect(
   tenantId: string,
   taskId: string,
-  vehicleId: string,
+  vehicleId: number,
 ): Promise<{
   status: string;
   actualOdometerKm: number | null;

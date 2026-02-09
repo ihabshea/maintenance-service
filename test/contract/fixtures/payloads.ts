@@ -177,6 +177,28 @@ export const VALID_PAYLOADS = {
     },
   },
 
+  updateWorkshop: {
+    standard: {
+      name: 'Updated Workshop Name',
+      location: 'Updated Location',
+    },
+    nameOnly: {
+      name: 'Name Only Update',
+    },
+    statusOnly: {
+      status: 'inactive',
+    },
+  },
+
+  updateReason: {
+    standard: {
+      label: 'Updated Reason Label',
+    },
+    statusOnly: {
+      status: 'inactive',
+    },
+  },
+
   createAttachment: {
     receipt: {
       fileUrl: 'https://storage.example.com/receipts/invoice.pdf',
@@ -227,7 +249,7 @@ export const INVALID_PAYLOADS = {
     invalidVehicleId: {
       title: 'Test Task',
       maintenanceType: 'preventive',
-      vehicles: [{ vehicleId: 'not-a-uuid' }],
+      vehicles: [{ vehicleId: 'not-an-integer' }],
     },
   },
 
@@ -236,7 +258,7 @@ export const INVALID_PAYLOADS = {
       vehicles: [],
     },
     invalidVehicleId: {
-      vehicles: [{ vehicleId: 'not-a-uuid' }],
+      vehicles: [{ vehicleId: 'not-an-integer' }],
     },
     missingVehicles: {},
   },
@@ -341,6 +363,20 @@ export const INVALID_PAYLOADS = {
   createWorkshop: {
     missingName: {
       location: 'Test Location',
+    },
+  },
+
+  updateWorkshop: {
+    emptyBody: {},
+    nonWhitelisted: {
+      unknownField: 'x',
+    },
+  },
+
+  updateReason: {
+    emptyBody: {},
+    nonWhitelisted: {
+      unknownField: 'x',
     },
   },
 

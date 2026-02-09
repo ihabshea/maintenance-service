@@ -63,6 +63,46 @@ export async function verifyCreateAudit(
 }
 
 /**
+ * Verifies the update audit entry for a modified entity.
+ */
+export async function verifyUpdateAudit(
+  tenantId: string,
+  entityType: AuditEntityType,
+  entityId: string,
+  expectedActor?: string,
+): Promise<void> {
+  const auditLog = await getLatestAuditLog(tenantId, entityType, entityId);
+
+  expect(auditLog).not.toBeNull();
+  expect(auditLog?.action).toBe('updated');
+  expect(auditLog?.previousValue).not.toBeNull();
+  expect(auditLog?.newValue).not.toBeNull();
+
+  if (expectedActor) {
+    expect(auditLog?.actor).toBe(expectedActor);
+  }
+}
+
+/**
+ * Verifies the delete (soft-delete) audit entry for an entity.
+ */
+export async function verifyDeleteAudit(
+  tenantId: string,
+  entityType: AuditEntityType,
+  entityId: string,
+  expectedActor?: string,
+): Promise<void> {
+  const auditLog = await getLatestAuditLog(tenantId, entityType, entityId);
+
+  expect(auditLog).not.toBeNull();
+  expect(auditLog?.action).toBe('deleted');
+
+  if (expectedActor) {
+    expect(auditLog?.actor).toBe(expectedActor);
+  }
+}
+
+/**
  * Verifies the status transition audit entry.
  * Note: For task_vehicle audits, the entityId is the taskId, not vehicleId.
  * The action names are: status_completed, status_cancelled, status_rescheduled

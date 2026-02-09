@@ -1,5 +1,6 @@
 import {
   IsString,
+  IsNotEmpty,
   IsOptional,
   IsEnum,
   IsInt,
@@ -27,8 +28,8 @@ export enum TriggerModeDto {
 
 export class VehicleInputDto {
   @ApiProperty({ description: 'Vehicle ID' })
-  @IsUUID()
-  vehicleId: string;
+  @IsInt()
+  vehicleId: number;
 
   @ApiPropertyOptional({ description: 'Due odometer in km' })
   @IsOptional()
@@ -45,11 +46,13 @@ export class VehicleInputDto {
 export class ChecklistItemDto {
   @ApiProperty({ description: 'Job code' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(50)
   jobCode: string;
 
   @ApiProperty({ description: 'Job label' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(255)
   label: string;
 
@@ -62,6 +65,7 @@ export class ChecklistItemDto {
 export class CreateTaskDto {
   @ApiProperty({ description: 'Task title' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(255)
   title: string;
 

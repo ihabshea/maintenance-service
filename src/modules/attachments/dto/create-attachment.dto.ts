@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUrl, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUrl, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAttachmentDto {
@@ -8,6 +8,7 @@ export class CreateAttachmentDto {
 
   @ApiProperty({ description: 'File type (e.g., receipt, document)' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(50)
   fileType: string;
 

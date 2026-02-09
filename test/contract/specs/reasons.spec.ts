@@ -5,10 +5,12 @@ import {
   assertOk,
   assertCreated,
   assertBadRequest,
+  assertNotFound,
+  assertForbidden,
   assertDataIsArray,
   assertReasonStructure,
 } from '../helpers/assertions.helper';
-import { verifyCreateAudit } from '../helpers/audit.helper';
+import { verifyCreateAudit, verifyUpdateAudit, verifyDeleteAudit } from '../helpers/audit.helper';
 import { cleanupTenant } from '../helpers/prisma.helper';
 import { UUIDS } from '../fixtures/uuids';
 import { VALID_PAYLOADS, INVALID_PAYLOADS } from '../fixtures/payloads';
@@ -185,6 +187,158 @@ describe('Reasons Reference Data', () => {
         const data = extractData<{ id: string }>(response);
 
         await verifyCreateAudit(UUIDS.tenants.A, 'reason', data.id);
+      });
+    });
+  });
+
+  describe('PATCH /api/reference/reasons/:id', () => {
+    let tenantReasonId: string;
+
+    beforeEach(async () => {
+      await cleanupTenant(UUIDS.tenants.A);
+      http.setTenantId(UUIDS.tenants.A);
+
+      // Create a tenant reason to update
+      const response = await http
+        .post(API_PATHS.reasons)
+        .send(VALID_PAYLOADS.createReason.cancellation);
+      tenantReasonId = extractData<any>(response).id;
+    });
+
+    describe('Happy Path', () => {
+      it('should update reason label', async () => {
+        const response = await http
+          .patch(API_PATHS.reason(tenantReasonId))
+          .send(VALID_PAYLOADS.updateReason.standard);
+
+        assertOk(response);
+        const data = extractData<any>(response);
+
+        expect(data.label).toBe('Updated Reason Label');
+        expect(data.id).toBe(tenantReasonId);
+      });
+
+      it('should allow partial update (status only)', async () => {
+        const response = await http
+          .patch(API_PATHS.reason(tenantReasonId))
+          .send(VALID_PAYLOADS.updateReason.statusOnly);
+
+        assertOk(response);
+        const data = extractData<any>(response);
+
+        expect(data.status).toBe('inactive');
+      });
+    });
+
+    describe('Error Cases', () => {
+      it('should return 404 for non-existent reason', async () => {
+        const response = await http
+          .patch(API_PATHS.reason(UUIDS.nonExistent.REASON))
+          .send(VALID_PAYLOADS.updateReason.standard);
+
+        assertNotFound(response);
+      });
+
+      it('should return 403 for system reason', async () => {
+        const response = await http
+          .patch(API_PATHS.reason(UUIDS.reasons.SYSTEM_SOLD))
+          .send(VALID_PAYLOADS.updateReason.standard);
+
+        assertForbidden(response);
+      });
+    });
+
+    describe('Audit Logging', () => {
+      it('should create update audit log entry', async () => {
+        await http
+          .patch(API_PATHS.reason(tenantReasonId))
+          .send(VALID_PAYLOADS.updateReason.standard);
+
+        await verifyUpdateAudit(UUIDS.tenants.A, 'reason', tenantReasonId);
+      });
+    });
+
+    describe('Tenant Isolation', () => {
+      it('should not allow tenant B to update tenant A reason', async () => {
+        http.setTenantId(UUIDS.tenants.B);
+        const response = await http
+          .patch(API_PATHS.reason(tenantReasonId))
+          .send(VALID_PAYLOADS.updateReason.standard);
+
+        assertNotFound(response);
+      });
+    });
+  });
+
+  describe('DELETE /api/reference/reasons/:id', () => {
+    let tenantReasonId: string;
+
+    beforeEach(async () => {
+      await cleanupTenant(UUIDS.tenants.A);
+      http.setTenantId(UUIDS.tenants.A);
+
+      // Create a tenant reason to delete
+      const response = await http
+        .post(API_PATHS.reasons)
+        .send(VALID_PAYLOADS.createReason.cancellation);
+      tenantReasonId = extractData<any>(response).id;
+    });
+
+    describe('Happy Path', () => {
+      it('should soft-delete reason by setting status to inactive', async () => {
+        const response = await http
+          .delete(API_PATHS.reason(tenantReasonId));
+
+        assertOk(response);
+        const data = extractData<any>(response);
+
+        expect(data.status).toBe('inactive');
+        expect(data.id).toBe(tenantReasonId);
+      });
+
+      it('should not return deleted reason in GET list', async () => {
+        await http.delete(API_PATHS.reason(tenantReasonId));
+
+        const listResponse = await http.get(API_PATHS.reasons);
+        assertOk(listResponse);
+
+        const reasons = listResponse.body.data;
+        const found = reasons.find((r: any) => r.id === tenantReasonId);
+        expect(found).toBeUndefined();
+      });
+    });
+
+    describe('Error Cases', () => {
+      it('should return 404 for non-existent reason', async () => {
+        const response = await http
+          .delete(API_PATHS.reason(UUIDS.nonExistent.REASON));
+
+        assertNotFound(response);
+      });
+
+      it('should return 403 for system reason', async () => {
+        const response = await http
+          .delete(API_PATHS.reason(UUIDS.reasons.SYSTEM_SOLD));
+
+        assertForbidden(response);
+      });
+    });
+
+    describe('Audit Logging', () => {
+      it('should create delete audit log entry', async () => {
+        await http.delete(API_PATHS.reason(tenantReasonId));
+
+        await verifyDeleteAudit(UUIDS.tenants.A, 'reason', tenantReasonId);
+      });
+    });
+
+    describe('Tenant Isolation', () => {
+      it('should not allow tenant B to delete tenant A reason', async () => {
+        http.setTenantId(UUIDS.tenants.B);
+        const response = await http
+          .delete(API_PATHS.reason(tenantReasonId));
+
+        assertNotFound(response);
       });
     });
   });

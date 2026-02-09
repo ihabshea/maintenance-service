@@ -8,6 +8,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiParam } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
@@ -58,10 +59,10 @@ export class TasksController {
   }
 
   @Get('vehicles/:vehicleId/maintenance')
-  @ApiParam({ name: 'vehicleId', type: 'string' })
+  @ApiParam({ name: 'vehicleId', type: 'number' })
   async getVehicleMaintenance(
     @TenantId() tenantId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Query() query: VehicleMaintenanceQueryDto,
   ) {
     return this.tasksService.getVehicleMaintenance(tenantId, vehicleId, query);
@@ -70,12 +71,12 @@ export class TasksController {
   @Patch('maintenance/tasks/:taskId/vehicles/:vehicleId/status/completed')
   @HttpCode(HttpStatus.OK)
   @ApiParam({ name: 'taskId', type: 'string' })
-  @ApiParam({ name: 'vehicleId', type: 'string' })
+  @ApiParam({ name: 'vehicleId', type: 'number' })
   async completeVehicle(
     @TenantId() tenantId: string,
     @Actor() actor: string,
     @Param('taskId') taskId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: CompleteVehicleDto,
   ) {
     await this.tasksService.completeVehicle(
@@ -91,12 +92,12 @@ export class TasksController {
   @Patch('maintenance/tasks/:taskId/vehicles/:vehicleId/status/cancelled')
   @HttpCode(HttpStatus.OK)
   @ApiParam({ name: 'taskId', type: 'string' })
-  @ApiParam({ name: 'vehicleId', type: 'string' })
+  @ApiParam({ name: 'vehicleId', type: 'number' })
   async cancelVehicle(
     @TenantId() tenantId: string,
     @Actor() actor: string,
     @Param('taskId') taskId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: CancelVehicleDto,
   ) {
     await this.tasksService.cancelVehicle(
@@ -112,12 +113,12 @@ export class TasksController {
   @Patch('maintenance/tasks/:taskId/vehicles/:vehicleId/status/rescheduled')
   @HttpCode(HttpStatus.OK)
   @ApiParam({ name: 'taskId', type: 'string' })
-  @ApiParam({ name: 'vehicleId', type: 'string' })
+  @ApiParam({ name: 'vehicleId', type: 'number' })
   async rescheduleVehicle(
     @TenantId() tenantId: string,
     @Actor() actor: string,
     @Param('taskId') taskId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: RescheduleVehicleDto,
   ) {
     await this.tasksService.rescheduleVehicle(
@@ -132,12 +133,12 @@ export class TasksController {
 
   @Post('maintenance/tasks/:taskId/vehicles/:vehicleId/corrections')
   @ApiParam({ name: 'taskId', type: 'string' })
-  @ApiParam({ name: 'vehicleId', type: 'string' })
+  @ApiParam({ name: 'vehicleId', type: 'number' })
   async applyCorrection(
     @TenantId() tenantId: string,
     @Actor() actor: string,
     @Param('taskId') taskId: string,
-    @Param('vehicleId') vehicleId: string,
+    @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: CorrectionDto,
   ) {
     await this.tasksService.applyCorrection(

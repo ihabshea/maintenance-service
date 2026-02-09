@@ -74,6 +74,14 @@ export function assertNotFound(response: HttpResponse): void {
 }
 
 /**
+ * Asserts the response is forbidden (403).
+ */
+export function assertForbidden(response: HttpResponse): void {
+  assertStatus(response, 403);
+  expect(response.body).toHaveProperty('statusCode', 403);
+}
+
+/**
  * Asserts the response is a conflict (409).
  */
 export function assertConflict(response: HttpResponse): void {

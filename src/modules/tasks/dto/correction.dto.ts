@@ -1,5 +1,6 @@
 import {
   IsString,
+  IsNotEmpty,
   IsOptional,
   IsInt,
   IsNumber,
@@ -100,6 +101,7 @@ export class CorrectionPatchDto {
 export class CorrectionDto {
   @ApiProperty({ description: 'Reason for correction' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(500)
   correctionReason: string;
 

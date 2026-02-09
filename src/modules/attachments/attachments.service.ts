@@ -28,7 +28,7 @@ export class AttachmentsService {
   async createAttachment(
     tenantId: string,
     taskId: string,
-    vehicleId: string,
+    vehicleId: number,
     dto: CreateAttachmentDto,
     actor: string,
   ) {
@@ -72,7 +72,7 @@ export class AttachmentsService {
   async getAttachments(
     tenantId: string,
     taskId: string,
-    vehicleId: string,
+    vehicleId: number,
     query: PaginationQueryDto,
   ): Promise<PaginatedResult<MaintenanceAttachment>> {
     const limit = query.limit ?? 20;

@@ -301,7 +301,7 @@ export class TasksService {
 
   async getVehicleMaintenance(
     tenantId: string,
-    vehicleId: string,
+    vehicleId: number,
     query: VehicleMaintenanceQueryDto,
   ): Promise<PaginatedResult<Record<string, unknown>>> {
     const limit = query.limit ?? 20;
@@ -309,7 +309,7 @@ export class TasksService {
 
     const where: {
       tenantId: string;
-      vehicleId: string;
+      vehicleId: number;
       status?: TaskVehicleStatus;
       task?: { maintenanceType: MaintenanceType };
     } = {
@@ -347,7 +347,7 @@ export class TasksService {
           },
         },
       }),
-    });
+    }) as (MaintenanceTaskVehicle & { task: MaintenanceTask; vehicleJobs: any[]; workshop: any; cancellationReason: any })[];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -385,7 +385,7 @@ export class TasksService {
   async completeVehicle(
     tenantId: string,
     taskId: string,
-    vehicleId: string,
+    vehicleId: number,
     dto: CompleteVehicleDto,
     actor: string,
   ): Promise<void> {
@@ -462,7 +462,7 @@ export class TasksService {
   async cancelVehicle(
     tenantId: string,
     taskId: string,
-    vehicleId: string,
+    vehicleId: number,
     dto: CancelVehicleDto,
     actor: string,
   ): Promise<void> {
@@ -526,7 +526,7 @@ export class TasksService {
   async rescheduleVehicle(
     tenantId: string,
     taskId: string,
-    vehicleId: string,
+    vehicleId: number,
     dto: RescheduleVehicleDto,
     actor: string,
   ): Promise<void> {
@@ -567,7 +567,7 @@ export class TasksService {
   async applyCorrection(
     tenantId: string,
     taskId: string,
-    vehicleId: string,
+    vehicleId: number,
     dto: CorrectionDto,
     actor: string,
   ): Promise<void> {
@@ -656,7 +656,7 @@ export class TasksService {
   private async getTaskVehicle(
     tenantId: string,
     taskId: string,
-    vehicleId: string,
+    vehicleId: number,
   ): Promise<MaintenanceTaskVehicle> {
     await this.getTaskByIdInternal(tenantId, taskId);
 

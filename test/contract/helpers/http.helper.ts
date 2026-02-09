@@ -129,28 +129,30 @@ export const API_PATHS = {
   taskVehicles: (taskId: string) => `/api/maintenance/tasks/${taskId}/vehicles`,
 
   // Vehicle maintenance
-  vehicleMaintenance: (vehicleId: string) =>
+  vehicleMaintenance: (vehicleId: number) =>
     `/api/vehicles/${vehicleId}/maintenance`,
 
   // Status transitions
-  completeVehicle: (taskId: string, vehicleId: string) =>
+  completeVehicle: (taskId: string, vehicleId: number) =>
     `/api/maintenance/tasks/${taskId}/vehicles/${vehicleId}/status/completed`,
-  cancelVehicle: (taskId: string, vehicleId: string) =>
+  cancelVehicle: (taskId: string, vehicleId: number) =>
     `/api/maintenance/tasks/${taskId}/vehicles/${vehicleId}/status/cancelled`,
-  rescheduleVehicle: (taskId: string, vehicleId: string) =>
+  rescheduleVehicle: (taskId: string, vehicleId: number) =>
     `/api/maintenance/tasks/${taskId}/vehicles/${vehicleId}/status/rescheduled`,
 
   // Corrections
-  corrections: (taskId: string, vehicleId: string) =>
+  corrections: (taskId: string, vehicleId: number) =>
     `/api/maintenance/tasks/${taskId}/vehicles/${vehicleId}/corrections`,
 
   // Attachments
-  attachments: (taskId: string, vehicleId: string) =>
+  attachments: (taskId: string, vehicleId: number) =>
     `/api/maintenance/tasks/${taskId}/vehicles/${vehicleId}/attachments`,
 
   // Reference data
   workshops: '/api/reference/workshops',
+  workshop: (id: string) => `/api/reference/workshops/${id}`,
   reasons: '/api/reference/reasons',
+  reason: (id: string) => `/api/reference/reasons/${id}`,
 
   // Reports
   maintenanceStatus: '/api/reports/maintenance-status',

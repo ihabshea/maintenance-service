@@ -17,7 +17,7 @@ describe('TasksService', () => {
 
   const mockTenantId = '1';
   const mockTaskId = '00000000-0000-0000-0000-000000000002';
-  const mockVehicleId = '00000000-0000-0000-0000-000000000003';
+  const mockVehicleId = 1001;
   const mockWorkshopId = '00000000-0000-0000-0000-000000000004';
   const mockActor = 'test-user';
 

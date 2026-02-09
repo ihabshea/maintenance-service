@@ -1,5 +1,6 @@
 import {
   IsString,
+  IsNotEmpty,
   IsOptional,
   IsEnum,
   IsInt,
@@ -33,6 +34,7 @@ export enum JobStatusDto {
 export class JobStatusUpdateDto {
   @ApiProperty({ description: 'Job code' })
   @IsString()
+  @IsNotEmpty()
   jobCode: string;
 
   @ApiProperty({ enum: JobStatusDto, description: 'Job status' })
@@ -162,6 +164,7 @@ export class RescheduleVehicleDto {
 
   @ApiProperty({ description: 'Reschedule reason' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(500)
   reason: string;
 }

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum WorkshopScopeDto {
@@ -9,6 +9,7 @@ export enum WorkshopScopeDto {
 export class CreateWorkshopDto {
   @ApiProperty({ description: 'Workshop name' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(255)
   name: string;
 

@@ -83,7 +83,7 @@ model MaintenanceTask {
 model MaintenanceTaskVehicle {
   tenantId                   String   @map("tenant_id")
   taskId                     String   @map("task_id") @db.Uuid
-  vehicleId                  String   @map("vehicle_id") @db.Uuid
+  vehicleId                  Int      @map("vehicle_id")
   status                     TaskVehicleStatus @default(open)
   dueOdometerKm              Int?     @map("due_odometer_km")
   dueDate                    DateTime? @map("due_date") @db.Date
@@ -132,7 +132,7 @@ model MaintenanceTaskJob {
 model MaintenanceTaskVehicleJob {
   tenantId  String    @map("tenant_id")
   taskId    String    @map("task_id") @db.Uuid
-  vehicleId String    @map("vehicle_id") @db.Uuid
+  vehicleId Int       @map("vehicle_id")
   jobCode   String    @map("job_code") @db.Text
   status    JobStatus @default(pending)
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -182,7 +182,7 @@ model MaintenanceAttachment {
   id          String   @id @default(uuid()) @db.Uuid
   tenantId    String   @map("tenant_id")
   taskId      String   @map("task_id") @db.Uuid
-  vehicleId   String   @map("vehicle_id") @db.Uuid
+  vehicleId   Int      @map("vehicle_id")
   fileUrl     String   @map("file_url") @db.Text
   fileType    String   @map("file_type") @db.Text
   fileName    String?  @map("file_name") @db.Text

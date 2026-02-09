@@ -1,4 +1,4 @@
-import { IsString, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum ReasonTypeDto {
@@ -12,6 +12,7 @@ export class CreateReasonDto {
 
   @ApiProperty({ description: 'Reason label' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(255)
   label: string;
 }
