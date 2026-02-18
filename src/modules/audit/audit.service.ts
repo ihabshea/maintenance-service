@@ -50,11 +50,11 @@ export class AuditService {
     });
   }
 
-  async getEntityAuditLog(
+  async getAuditLogs(
     tenantId: string,
-    entityType: AuditEntityType,
-    entityId: string,
     query: PaginationQueryDto,
+    entityType?: AuditEntityType,
+    entityId?: string,
     fromDate?: string,
     toDate?: string,
   ): Promise<PaginatedResult<{ id: string; [key: string]: unknown }>> {
@@ -74,8 +74,8 @@ export class AuditService {
     const entries = await this.prisma.maintenanceAuditLog.findMany({
       where: {
         tenantId,
-        entityType,
-        entityId,
+        ...(entityType && { entityType }),
+        ...(entityId && { entityId }),
         ...(Object.keys(timestampFilter).length > 0 && {
           timestamp: timestampFilter,
         }),

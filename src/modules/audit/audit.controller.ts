@@ -15,11 +15,11 @@ export class AuditController {
     @TenantId() tenantId: string,
     @Query() query: AuditLogQueryDto,
   ) {
-    return this.auditService.getEntityAuditLog(
+    return this.auditService.getAuditLogs(
       tenantId,
+      query,
       query.entityType,
       query.entityId,
-      query,
       query.fromDate,
       query.toDate,
     );
