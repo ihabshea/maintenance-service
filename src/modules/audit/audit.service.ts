@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditEntityType, Prisma } from '@prisma/client';
+import {
+  PaginatedResult,
+  PaginationQueryDto,
+  buildPaginatedResult,
+  decodeCursor,
+} from '../../common/dto/pagination.dto';
 
 export interface AuditLogEntry {
   tenantId: string;
@@ -48,8 +54,12 @@ export class AuditService {
     tenantId: string,
     entityType: AuditEntityType,
     entityId: string,
-  ) {
-    return this.prisma.maintenanceAuditLog.findMany({
+    query: PaginationQueryDto,
+  ): Promise<PaginatedResult<{ id: string; [key: string]: unknown }>> {
+    const limit = query.limit ?? 20;
+    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+
+    const entries = await this.prisma.maintenanceAuditLog.findMany({
       where: {
         tenantId,
         entityType,
@@ -58,6 +68,13 @@ export class AuditService {
       orderBy: {
         timestamp: 'desc',
       },
+      take: limit + 1,
+      ...(cursorData && {
+        skip: 1,
+        cursor: { id: cursorData.id },
+      }),
     });
+
+    return buildPaginatedResult(entries, limit);
   }
 }
