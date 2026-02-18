@@ -220,10 +220,17 @@ describe('ReferenceService', () => {
       const updateDto = { name: 'New Name', location: 'New Location' };
       const updatedWorkshop = { ...mockTenantWorkshop, ...updateDto };
 
-      mockPrismaService.workshop.findFirst.mockResolvedValue(mockTenantWorkshop);
+      mockPrismaService.workshop.findFirst.mockResolvedValue(
+        mockTenantWorkshop,
+      );
       mockPrismaService.workshop.update.mockResolvedValue(updatedWorkshop);
 
-      const result = await service.updateWorkshop('ws-1', mockTenantId, updateDto, mockActor);
+      const result = await service.updateWorkshop(
+        'ws-1',
+        mockTenantId,
+        updateDto,
+        mockActor,
+      );
 
       expect(mockPrismaService.workshop.update).toHaveBeenCalledWith({
         where: { id: 'ws-1' },
@@ -243,15 +250,27 @@ describe('ReferenceService', () => {
       mockPrismaService.workshop.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.updateWorkshop('nonexistent', mockTenantId, { name: 'X' }, mockActor),
+        service.updateWorkshop(
+          'nonexistent',
+          mockTenantId,
+          { name: 'X' },
+          mockActor,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException for system workshop', async () => {
-      mockPrismaService.workshop.findFirst.mockResolvedValue(mockSystemWorkshop);
+      mockPrismaService.workshop.findFirst.mockResolvedValue(
+        mockSystemWorkshop,
+      );
 
       await expect(
-        service.updateWorkshop('ws-sys', mockTenantId, { name: 'X' }, mockActor),
+        service.updateWorkshop(
+          'ws-sys',
+          mockTenantId,
+          { name: 'X' },
+          mockActor,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -278,10 +297,16 @@ describe('ReferenceService', () => {
     it('should soft-delete a tenant workshop by setting status to inactive', async () => {
       const deletedWorkshop = { ...mockTenantWorkshop, status: 'inactive' };
 
-      mockPrismaService.workshop.findFirst.mockResolvedValue(mockTenantWorkshop);
+      mockPrismaService.workshop.findFirst.mockResolvedValue(
+        mockTenantWorkshop,
+      );
       mockPrismaService.workshop.update.mockResolvedValue(deletedWorkshop);
 
-      const result = await service.deleteWorkshop('ws-1', mockTenantId, mockActor);
+      const result = await service.deleteWorkshop(
+        'ws-1',
+        mockTenantId,
+        mockActor,
+      );
 
       expect(mockPrismaService.workshop.update).toHaveBeenCalledWith({
         where: { id: 'ws-1' },
@@ -306,7 +331,9 @@ describe('ReferenceService', () => {
     });
 
     it('should throw ForbiddenException for system workshop', async () => {
-      mockPrismaService.workshop.findFirst.mockResolvedValue(mockSystemWorkshop);
+      mockPrismaService.workshop.findFirst.mockResolvedValue(
+        mockSystemWorkshop,
+      );
 
       await expect(
         service.deleteWorkshop('ws-sys', mockTenantId, mockActor),
@@ -340,7 +367,12 @@ describe('ReferenceService', () => {
       mockPrismaService.reason.findFirst.mockResolvedValue(mockTenantReason);
       mockPrismaService.reason.update.mockResolvedValue(updatedReason);
 
-      const result = await service.updateReason('r-1', mockTenantId, updateDto, mockActor);
+      const result = await service.updateReason(
+        'r-1',
+        mockTenantId,
+        updateDto,
+        mockActor,
+      );
 
       expect(mockPrismaService.reason.update).toHaveBeenCalledWith({
         where: { id: 'r-1' },
@@ -360,7 +392,12 @@ describe('ReferenceService', () => {
       mockPrismaService.reason.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.updateReason('nonexistent', mockTenantId, { label: 'X' }, mockActor),
+        service.updateReason(
+          'nonexistent',
+          mockTenantId,
+          { label: 'X' },
+          mockActor,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 

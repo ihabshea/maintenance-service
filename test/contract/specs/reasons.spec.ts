@@ -10,7 +10,11 @@ import {
   assertDataIsArray,
   assertReasonStructure,
 } from '../helpers/assertions.helper';
-import { verifyCreateAudit, verifyUpdateAudit, verifyDeleteAudit } from '../helpers/audit.helper';
+import {
+  verifyCreateAudit,
+  verifyUpdateAudit,
+  verifyDeleteAudit,
+} from '../helpers/audit.helper';
 import { cleanupTenant } from '../helpers/prisma.helper';
 import { UUIDS } from '../fixtures/uuids';
 import { VALID_PAYLOADS, INVALID_PAYLOADS } from '../fixtures/payloads';
@@ -286,8 +290,7 @@ describe('Reasons Reference Data', () => {
 
     describe('Happy Path', () => {
       it('should soft-delete reason by setting status to inactive', async () => {
-        const response = await http
-          .delete(API_PATHS.reason(tenantReasonId));
+        const response = await http.delete(API_PATHS.reason(tenantReasonId));
 
         assertOk(response);
         const data = extractData<any>(response);
@@ -310,15 +313,17 @@ describe('Reasons Reference Data', () => {
 
     describe('Error Cases', () => {
       it('should return 404 for non-existent reason', async () => {
-        const response = await http
-          .delete(API_PATHS.reason(UUIDS.nonExistent.REASON));
+        const response = await http.delete(
+          API_PATHS.reason(UUIDS.nonExistent.REASON),
+        );
 
         assertNotFound(response);
       });
 
       it('should return 403 for system reason', async () => {
-        const response = await http
-          .delete(API_PATHS.reason(UUIDS.reasons.SYSTEM_SOLD));
+        const response = await http.delete(
+          API_PATHS.reason(UUIDS.reasons.SYSTEM_SOLD),
+        );
 
         assertForbidden(response);
       });
@@ -335,8 +340,7 @@ describe('Reasons Reference Data', () => {
     describe('Tenant Isolation', () => {
       it('should not allow tenant B to delete tenant A reason', async () => {
         http.setTenantId(UUIDS.tenants.B);
-        const response = await http
-          .delete(API_PATHS.reason(tenantReasonId));
+        const response = await http.delete(API_PATHS.reason(tenantReasonId));
 
         assertNotFound(response);
       });

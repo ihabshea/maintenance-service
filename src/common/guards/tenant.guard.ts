@@ -31,9 +31,7 @@ export class TenantGuard implements CanActivate {
     }
 
     if (!NUMERIC_ID_PATTERN.test(tenantId)) {
-      throw new BadRequestException(
-        'X-Tenant-Id must be a valid numeric ID',
-      );
+      throw new BadRequestException('X-Tenant-Id must be a valid numeric ID');
     }
 
     request.tenantId = tenantId;

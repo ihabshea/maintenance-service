@@ -10,7 +10,11 @@ import {
   assertDataIsArray,
   assertWorkshopStructure,
 } from '../helpers/assertions.helper';
-import { verifyCreateAudit, verifyUpdateAudit, verifyDeleteAudit } from '../helpers/audit.helper';
+import {
+  verifyCreateAudit,
+  verifyUpdateAudit,
+  verifyDeleteAudit,
+} from '../helpers/audit.helper';
 import { cleanupTenant } from '../helpers/prisma.helper';
 import { UUIDS } from '../fixtures/uuids';
 import { VALID_PAYLOADS, INVALID_PAYLOADS } from '../fixtures/payloads';
@@ -275,8 +279,9 @@ describe('Workshops Reference Data', () => {
 
     describe('Happy Path', () => {
       it('should soft-delete workshop by setting status to inactive', async () => {
-        const response = await http
-          .delete(API_PATHS.workshop(tenantWorkshopId));
+        const response = await http.delete(
+          API_PATHS.workshop(tenantWorkshopId),
+        );
 
         assertOk(response);
         const data = extractData<any>(response);
@@ -299,15 +304,17 @@ describe('Workshops Reference Data', () => {
 
     describe('Error Cases', () => {
       it('should return 404 for non-existent workshop', async () => {
-        const response = await http
-          .delete(API_PATHS.workshop(UUIDS.nonExistent.WORKSHOP));
+        const response = await http.delete(
+          API_PATHS.workshop(UUIDS.nonExistent.WORKSHOP),
+        );
 
         assertNotFound(response);
       });
 
       it('should return 403 for system workshop', async () => {
-        const response = await http
-          .delete(API_PATHS.workshop(UUIDS.workshops.SYSTEM_MAIN));
+        const response = await http.delete(
+          API_PATHS.workshop(UUIDS.workshops.SYSTEM_MAIN),
+        );
 
         assertForbidden(response);
       });
@@ -324,8 +331,9 @@ describe('Workshops Reference Data', () => {
     describe('Tenant Isolation', () => {
       it('should not allow tenant B to delete tenant A workshop', async () => {
         http.setTenantId(UUIDS.tenants.B);
-        const response = await http
-          .delete(API_PATHS.workshop(tenantWorkshopId));
+        const response = await http.delete(
+          API_PATHS.workshop(tenantWorkshopId),
+        );
 
         assertNotFound(response);
       });
