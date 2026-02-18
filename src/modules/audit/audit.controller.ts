@@ -20,6 +20,8 @@ export class AuditController {
       query.entityType,
       query.entityId,
       query,
+      query.fromDate,
+      query.toDate,
     );
   }
 }

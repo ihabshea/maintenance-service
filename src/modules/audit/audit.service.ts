@@ -55,15 +55,30 @@ export class AuditService {
     entityType: AuditEntityType,
     entityId: string,
     query: PaginationQueryDto,
+    fromDate?: string,
+    toDate?: string,
   ): Promise<PaginatedResult<{ id: string; [key: string]: unknown }>> {
     const limit = query.limit ?? 20;
     const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+
+    const timestampFilter: Record<string, Date> = {};
+    if (fromDate) {
+      timestampFilter.gte = new Date(fromDate);
+    }
+    if (toDate) {
+      const end = new Date(toDate);
+      end.setUTCHours(23, 59, 59, 999);
+      timestampFilter.lte = end;
+    }
 
     const entries = await this.prisma.maintenanceAuditLog.findMany({
       where: {
         tenantId,
         entityType,
         entityId,
+        ...(Object.keys(timestampFilter).length > 0 && {
+          timestamp: timestampFilter,
+        }),
       },
       orderBy: {
         timestamp: 'desc',
