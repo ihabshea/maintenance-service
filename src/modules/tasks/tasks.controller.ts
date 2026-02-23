@@ -20,7 +20,12 @@ import {
   RescheduleVehicleDto,
 } from './dto/status-transitions.dto';
 import { CorrectionDto } from './dto/correction.dto';
-import { VehicleMaintenanceQueryDto } from './dto/query.dto';
+import {
+  VehicleMaintenanceQueryDto,
+  TaskListQueryDto,
+  BulkVehicleMaintenanceDto,
+  BulkVehicleMaintenanceQueryDto,
+} from './dto/query.dto';
 import { TenantId, Actor } from '../../common/decorators';
 
 @ApiTags('Maintenance Tasks')
@@ -37,6 +42,14 @@ export class TasksController {
   ) {
     const task = await this.tasksService.createTask(tenantId, dto, actor);
     return { data: task };
+  }
+
+  @Get('maintenance/tasks')
+  async listTasks(
+    @TenantId() tenantId: string,
+    @Query() query: TaskListQueryDto,
+  ) {
+    return this.tasksService.listTasks(tenantId, query);
   }
 
   @Get('maintenance/tasks/:taskId')
@@ -56,6 +69,16 @@ export class TasksController {
   ) {
     await this.tasksService.addVehicles(tenantId, taskId, dto, actor);
     return { data: { success: true } };
+  }
+
+  @Post('vehicles/maintenance-status')
+  @HttpCode(HttpStatus.OK)
+  async getBulkVehicleMaintenance(
+    @TenantId() tenantId: string,
+    @Body() dto: BulkVehicleMaintenanceDto,
+    @Query() query: BulkVehicleMaintenanceQueryDto,
+  ) {
+    return this.tasksService.getBulkVehicleMaintenance(tenantId, dto, query);
   }
 
   @Get('vehicles/:vehicleId/maintenance')
