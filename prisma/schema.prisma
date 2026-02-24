@@ -43,6 +43,7 @@ enum ReferenceStatus {
 
 enum ReasonType {
   cancellation
+  rescheduling
 }
 
 enum AuditEntityType {
@@ -98,14 +99,16 @@ model MaintenanceTaskVehicle {
   cancellationReasonCustom   String?  @map("cancellation_reason_custom") @db.Text
   rescheduleOriginalDueDate  DateTime? @map("reschedule_original_due_date") @db.Date
   rescheduleNewDueDate       DateTime? @map("reschedule_new_due_date") @db.Date
-  rescheduleReason           String?  @map("reschedule_reason") @db.Text
+  rescheduleReasonId         String?  @map("reschedule_reason_id") @db.Uuid
+  rescheduleReasonCustom     String?  @map("reschedule_reason_custom") @db.Text
   rescheduleOdometerKm       Int?     @map("reschedule_odometer_km")
   createdAt                  DateTime @default(now()) @map("created_at")
   updatedAt                  DateTime @updatedAt @map("updated_at")
 
   task                       MaintenanceTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
   workshop                   Workshop? @relation(fields: [workshopId], references: [id])
-  cancellationReason         Reason? @relation(fields: [cancellationReasonId], references: [id])
+  cancellationReason         Reason? @relation("CancellationReason", fields: [cancellationReasonId], references: [id])
+  rescheduleReason           Reason? @relation("RescheduleReason", fields: [rescheduleReasonId], references: [id])
   vehicleJobs                MaintenanceTaskVehicleJob[]
   attachments                MaintenanceAttachment[]
 
@@ -171,7 +174,8 @@ model Reason {
   createdAt  DateTime        @default(now()) @map("created_at")
   updatedAt  DateTime        @updatedAt @map("updated_at")
 
-  taskVehicles MaintenanceTaskVehicle[]
+  cancelledTaskVehicles    MaintenanceTaskVehicle[] @relation("CancellationReason")
+  rescheduledTaskVehicles  MaintenanceTaskVehicle[] @relation("RescheduleReason")
 
   @@index([tenantId])
   @@index([scope, reasonType])

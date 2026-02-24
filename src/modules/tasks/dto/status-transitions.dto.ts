@@ -148,6 +148,31 @@ export class CancelVehicleDto {
   cancellationReason: CancellationReasonDto;
 }
 
+export enum RescheduleReasonModeDto {
+  master = 'master',
+  custom = 'custom',
+}
+
+export class RescheduleReasonDto {
+  @ApiProperty({
+    enum: RescheduleReasonModeDto,
+    description: 'Reschedule reason mode',
+  })
+  @IsEnum(RescheduleReasonModeDto)
+  mode: RescheduleReasonModeDto;
+
+  @ApiPropertyOptional({ description: 'Reason ID (for master mode)' })
+  @IsOptional()
+  @IsUUID()
+  reasonId?: string;
+
+  @ApiPropertyOptional({ description: 'Custom reason text' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  customReason?: string;
+}
+
 export class RescheduleVehicleDto {
   @ApiProperty({ description: 'Original due date' })
   @IsDateString()
@@ -162,9 +187,11 @@ export class RescheduleVehicleDto {
   @Min(0)
   rescheduleOdometerKm: number;
 
-  @ApiProperty({ description: 'Reschedule reason' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(500)
-  reason: string;
+  @ApiProperty({
+    type: RescheduleReasonDto,
+    description: 'Reschedule reason',
+  })
+  @ValidateNested()
+  @Type(() => RescheduleReasonDto)
+  rescheduleReason: RescheduleReasonDto;
 }

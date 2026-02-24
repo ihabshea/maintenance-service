@@ -41,7 +41,7 @@ export class ReportsService {
       }),
       this.prisma.maintenanceTaskVehicle.findMany({
         where: { ...baseWhere, status: TaskVehicleStatus.rescheduled },
-        include: { task: true },
+        include: { task: true, rescheduleReason: true },
         orderBy: { updatedAt: 'desc' },
       }),
     ]);
@@ -74,7 +74,8 @@ export class ReportsService {
         timestamp: v.updatedAt,
         km: v.rescheduleOdometerKm,
         rescheduledDate: v.rescheduleNewDueDate,
-        reason: v.rescheduleReason,
+        reason:
+          v.rescheduleReason?.label ?? v.rescheduleReasonCustom ?? null,
       })),
     };
   }
@@ -217,9 +218,7 @@ export class ReportsService {
     const ratio =
       correctiveCount > 0
         ? (preventiveCount / correctiveCount).toFixed(2)
-        : preventiveCount > 0
-          ? 'Infinity'
-          : '0.00';
+        : '0.00';
 
     return {
       preventive: {

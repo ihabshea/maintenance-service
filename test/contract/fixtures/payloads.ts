@@ -134,7 +134,10 @@ export const VALID_PAYLOADS = {
       originalDate: '2025-01-15',
       newScheduledDate: '2025-02-15',
       rescheduleOdometerKm: 48000,
-      reason: 'Parts not available',
+      rescheduleReason: {
+        mode: 'custom',
+        customReason: 'Parts not available',
+      },
     },
   },
 
@@ -328,17 +331,17 @@ export const INVALID_PAYLOADS = {
     missingOriginalDate: {
       newScheduledDate: '2025-02-15',
       rescheduleOdometerKm: 48000,
-      reason: 'Test',
+      rescheduleReason: { mode: 'custom', customReason: 'Test' },
     },
     missingNewScheduledDate: {
       originalDate: '2025-01-15',
       rescheduleOdometerKm: 48000,
-      reason: 'Test',
+      rescheduleReason: { mode: 'custom', customReason: 'Test' },
     },
     missingOdometer: {
       originalDate: '2025-01-15',
       newScheduledDate: '2025-02-15',
-      reason: 'Test',
+      rescheduleReason: { mode: 'custom', customReason: 'Test' },
     },
     missingReason: {
       originalDate: '2025-01-15',

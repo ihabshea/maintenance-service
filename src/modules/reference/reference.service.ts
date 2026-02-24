@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateWorkshopDto, WorkshopScopeDto } from './dto/create-workshop.dto';
@@ -174,6 +178,7 @@ export class ReferenceService {
     tenantId: string,
     dto: UpdateWorkshopDto,
     actor: string,
+    isSystemAdmin: boolean = false,
   ) {
     const workshop = await this.prisma.workshop.findFirst({
       where: { id, OR: [{ tenantId: null }, { tenantId }] },
@@ -183,12 +188,16 @@ export class ReferenceService {
       throw new NotFoundException(`Workshop with id ${id} not found`);
     }
 
-    if (workshop.tenantId === null) {
-      throw new ForbiddenException('System-scoped workshops cannot be modified');
+    if (workshop.tenantId === null && !isSystemAdmin) {
+      throw new ForbiddenException(
+        'System-scoped workshops cannot be modified',
+      );
     }
 
-    if (workshop.tenantId !== tenantId) {
-      throw new ForbiddenException('You do not have permission to modify this workshop');
+    if (workshop.tenantId !== null && workshop.tenantId !== tenantId) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this workshop',
+      );
     }
 
     const previousValue = { ...workshop } as unknown as Record<string, unknown>;
@@ -211,7 +220,12 @@ export class ReferenceService {
     return updated;
   }
 
-  async deleteWorkshop(id: string, tenantId: string, actor: string) {
+  async deleteWorkshop(
+    id: string,
+    tenantId: string,
+    actor: string,
+    isSystemAdmin: boolean = false,
+  ) {
     const workshop = await this.prisma.workshop.findFirst({
       where: { id, OR: [{ tenantId: null }, { tenantId }] },
     });
@@ -220,12 +234,16 @@ export class ReferenceService {
       throw new NotFoundException(`Workshop with id ${id} not found`);
     }
 
-    if (workshop.tenantId === null) {
-      throw new ForbiddenException('System-scoped workshops cannot be modified');
+    if (workshop.tenantId === null && !isSystemAdmin) {
+      throw new ForbiddenException(
+        'System-scoped workshops cannot be modified',
+      );
     }
 
-    if (workshop.tenantId !== tenantId) {
-      throw new ForbiddenException('You do not have permission to modify this workshop');
+    if (workshop.tenantId !== null && workshop.tenantId !== tenantId) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this workshop',
+      );
     }
 
     const updated = await this.prisma.workshop.update({
@@ -265,7 +283,9 @@ export class ReferenceService {
     }
 
     if (reason.tenantId !== tenantId) {
-      throw new ForbiddenException('You do not have permission to modify this reason');
+      throw new ForbiddenException(
+        'You do not have permission to modify this reason',
+      );
     }
 
     const previousValue = { ...reason } as unknown as Record<string, unknown>;
@@ -302,7 +322,9 @@ export class ReferenceService {
     }
 
     if (reason.tenantId !== tenantId) {
-      throw new ForbiddenException('You do not have permission to modify this reason');
+      throw new ForbiddenException(
+        'You do not have permission to modify this reason',
+      );
     }
 
     const updated = await this.prisma.reason.update({

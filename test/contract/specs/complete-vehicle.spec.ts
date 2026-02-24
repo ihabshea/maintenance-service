@@ -227,7 +227,7 @@ describe('PATCH .../status/completed', () => {
           rescheduleOriginalDueDate: new Date('2025-01-01'),
           rescheduleNewDueDate: new Date('2025-02-01'),
           rescheduleOdometerKm: 48000,
-          rescheduleReason: 'Test',
+          rescheduleReasonCustom: 'Test',
         },
       );
 

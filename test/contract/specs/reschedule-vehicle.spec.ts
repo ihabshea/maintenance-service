@@ -77,7 +77,7 @@ describe('PATCH .../status/rescheduled', () => {
 
       expect(vehicle?.status).toBe('rescheduled');
       expect(vehicle?.rescheduleOdometerKm).toBe(48000);
-      expect(vehicle?.rescheduleReason).toBe('Parts not available');
+      expect(vehicle?.rescheduleReasonCustom).toBe('Parts not available');
     });
   });
 

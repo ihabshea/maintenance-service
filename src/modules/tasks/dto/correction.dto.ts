@@ -85,11 +85,16 @@ export class CorrectionPatchDto {
   @IsDateString()
   rescheduleNewDueDate?: string;
 
-  @ApiPropertyOptional({ description: 'Reschedule reason' })
+  @ApiPropertyOptional({ description: 'Reschedule reason ID' })
+  @IsOptional()
+  @IsUUID()
+  rescheduleReasonId?: string;
+
+  @ApiPropertyOptional({ description: 'Custom reschedule reason' })
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  rescheduleReason?: string;
+  rescheduleReasonCustom?: string;
 
   @ApiPropertyOptional({ description: 'Reschedule odometer km' })
   @IsOptional()

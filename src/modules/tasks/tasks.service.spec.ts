@@ -8,6 +8,7 @@ import { MaintenanceTypeDto, TriggerModeDto } from './dto/create-task.dto';
 import {
   WorkshopModeDto,
   CancellationReasonModeDto,
+  RescheduleReasonModeDto,
 } from './dto/status-transitions.dto';
 
 describe('TasksService', () => {
@@ -294,7 +295,10 @@ describe('TasksService', () => {
         originalDate: '2024-01-15',
         newScheduledDate: '2024-02-15',
         rescheduleOdometerKm: 50000,
-        reason: 'Parts not available',
+        rescheduleReason: {
+          mode: RescheduleReasonModeDto.custom,
+          customReason: 'Parts not available',
+        },
       };
 
       await service.rescheduleVehicle(

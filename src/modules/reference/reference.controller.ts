@@ -1,10 +1,20 @@
-import { Controller, Get, Post, Patch, Delete, Body, Query, Headers, Param, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Query,
+  Headers,
+  Param,
+  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiBody } from '@nestjs/swagger';
 import { ReferenceService } from './reference.service';
-import {
-  CreateWorkshopDto,
-  WorkshopScopeDto,
-} from './dto/create-workshop.dto';
+import { CreateWorkshopDto, WorkshopScopeDto } from './dto/create-workshop.dto';
 import { CreateReasonDto } from './dto/create-reason.dto';
 import { UpdateWorkshopDto } from './dto/update-workshop.dto';
 import { UpdateReasonDto } from './dto/update-reason.dto';
@@ -71,31 +81,38 @@ export class ReferenceController {
   }
 
   @Patch('workshops/:id')
+  @ApiHeader({ name: 'X-System-Admin', required: false })
   async updateWorkshop(
     @TenantId() tenantId: string,
     @Actor() actor: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateWorkshopDto,
+    @Headers('x-system-admin') isSystemAdmin?: string,
   ) {
     const workshop = await this.referenceService.updateWorkshop(
       id,
       tenantId,
       dto,
       actor,
+      isSystemAdmin === 'true',
     );
     return { data: workshop };
   }
 
   @Delete('workshops/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiHeader({ name: 'X-System-Admin', required: false })
   async deleteWorkshop(
     @TenantId() tenantId: string,
     @Actor() actor: string,
     @Param('id', ParseUUIDPipe) id: string,
+    @Headers('x-system-admin') isSystemAdmin?: string,
   ) {
     const workshop = await this.referenceService.deleteWorkshop(
       id,
       tenantId,
       actor,
+      isSystemAdmin === 'true',
     );
     return { data: workshop };
   }

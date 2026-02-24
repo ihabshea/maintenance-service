@@ -81,7 +81,8 @@ export async function createTaskVehicleDirect(
     cancellationReasonCustom?: string;
     rescheduleOriginalDueDate?: Date;
     rescheduleNewDueDate?: Date;
-    rescheduleReason?: string;
+    rescheduleReasonId?: string;
+    rescheduleReasonCustom?: string;
     rescheduleOdometerKm?: number;
   },
 ): Promise<void> {
@@ -104,7 +105,8 @@ export async function createTaskVehicleDirect(
       cancellationReasonCustom: data?.cancellationReasonCustom,
       rescheduleOriginalDueDate: data?.rescheduleOriginalDueDate,
       rescheduleNewDueDate: data?.rescheduleNewDueDate,
-      rescheduleReason: data?.rescheduleReason,
+      rescheduleReasonId: data?.rescheduleReasonId,
+      rescheduleReasonCustom: data?.rescheduleReasonCustom,
       rescheduleOdometerKm: data?.rescheduleOdometerKm,
     },
   });

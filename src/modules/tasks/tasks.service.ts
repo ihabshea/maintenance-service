@@ -15,9 +15,17 @@ import {
   RescheduleVehicleDto,
   WorkshopModeDto,
   CancellationReasonModeDto,
+  RescheduleReasonModeDto,
 } from './dto/status-transitions.dto';
 import { CorrectionDto } from './dto/correction.dto';
-import { VehicleMaintenanceQueryDto } from './dto/query.dto';
+import {
+  VehicleMaintenanceQueryDto,
+  TaskListQueryDto,
+  TaskCompletionFilterDto,
+  BulkVehicleMaintenanceDto,
+  BulkVehicleMaintenanceQueryDto,
+  VehicleActivityFilterDto,
+} from './dto/query.dto';
 import {
   decodeCursor,
   buildPaginatedResult,
@@ -45,6 +53,7 @@ export interface VehicleWithOverdue extends MaintenanceTaskVehicle {
 }
 
 export interface TaskWithDetails extends MaintenanceTask {
+  completion: 'completed' | 'incompleted';
   vehicles: VehicleWithOverdue[];
   jobs: Array<{
     jobCode: string;
@@ -230,6 +239,101 @@ export class TasksService {
     );
   }
 
+  async listTasks(
+    tenantId: string,
+    query: TaskListQueryDto,
+  ): Promise<PaginatedResult<TaskWithDetails>> {
+    const limit = query.limit ?? 20;
+    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
+
+    const where: Prisma.MaintenanceTaskWhereInput = { tenantId };
+
+    if (query.maintenanceType) {
+      where.maintenanceType = query.maintenanceType as MaintenanceType;
+    }
+
+    if (query.completion === TaskCompletionFilterDto.completed) {
+      // All vehicles must be non-open (no open vehicles exist)
+      where.vehicles = {
+        every: { status: { not: 'open' } },
+        some: {}, // must have at least one vehicle
+      };
+    } else if (query.completion === TaskCompletionFilterDto.incompleted) {
+      // At least one vehicle is open
+      where.vehicles = { some: { status: 'open' } };
+    }
+
+    const tasks = await this.prisma.maintenanceTask.findMany({
+      where,
+      include: {
+        vehicles: {
+          include: {
+            vehicleJobs: true,
+            workshop: true,
+            cancellationReason: true,
+            rescheduleReason: true,
+          },
+        },
+        jobs: {
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      ...(cursorData && {
+        skip: 1,
+        cursor: { id: cursorData.id },
+      }),
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const mapped: TaskWithDetails[] = tasks.map((task) => ({
+      ...task,
+      completion: task.vehicles.length > 0 && task.vehicles.every((v) => v.status !== 'open')
+        ? 'completed' as const
+        : 'incompleted' as const,
+      vehicles: task.vehicles.map((v) => {
+        let overdue: boolean | null = null;
+        let overdueComputation:
+          | 'computed'
+          | 'insufficient_data'
+          | 'not_applicable' = 'not_applicable';
+
+        if (v.status === 'open' && task.maintenanceType === 'preventive') {
+          if (v.dueDate) {
+            const dueDate = new Date(v.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            overdue = dueDate < today;
+            overdueComputation = 'computed';
+          } else if (v.dueOdometerKm !== null) {
+            overdue = null;
+            overdueComputation = 'insufficient_data';
+          }
+        }
+
+        return {
+          ...v,
+          overdue,
+          overdueComputation,
+          vehicleJobs: v.vehicleJobs.map((vj) => ({
+            jobCode: vj.jobCode,
+            status: vj.status,
+            updatedAt: vj.updatedAt,
+          })),
+        };
+      }),
+      jobs: task.jobs.map((j) => ({
+        jobCode: j.jobCode,
+        label: j.label,
+        sortOrder: j.sortOrder,
+      })),
+    }));
+
+    return buildPaginatedResult(mapped, limit);
+  }
+
   async getTaskById(
     tenantId: string,
     taskId: string,
@@ -242,6 +346,7 @@ export class TasksService {
             vehicleJobs: true,
             workshop: true,
             cancellationReason: true,
+            rescheduleReason: true,
           },
         },
         jobs: {
@@ -290,6 +395,9 @@ export class TasksService {
 
     return {
       ...task,
+      completion: vehiclesWithOverdue.length > 0 && vehiclesWithOverdue.every((v) => v.status !== 'open')
+        ? 'completed' as const
+        : 'incompleted' as const,
       vehicles: vehiclesWithOverdue,
       jobs: task.jobs.map((j) => ({
         jobCode: j.jobCode,
@@ -297,6 +405,71 @@ export class TasksService {
         sortOrder: j.sortOrder,
       })),
     };
+  }
+
+  async getBulkVehicleMaintenance(
+    tenantId: string,
+    dto: BulkVehicleMaintenanceDto,
+    query: BulkVehicleMaintenanceQueryDto,
+  ) {
+    const taskVehicles = await this.prisma.maintenanceTaskVehicle.findMany({
+      where: {
+        tenantId,
+        vehicleId: { in: dto.vehicleIds },
+      },
+      include: {
+        task: {
+          include: {
+            jobs: { orderBy: { sortOrder: 'asc' } },
+          },
+        },
+        vehicleJobs: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Group by vehicleId
+    const vehicleMap = new Map<number, typeof taskVehicles>();
+    for (const tv of taskVehicles) {
+      const list = vehicleMap.get(tv.vehicleId) || [];
+      list.push(tv);
+      vehicleMap.set(tv.vehicleId, list);
+    }
+
+    // Build response for each requested vehicle
+    let vehicles = dto.vehicleIds.map((vehicleId) => {
+      const entries = vehicleMap.get(vehicleId) || [];
+      const hasOpenTask = entries.some((e) => e.status === 'open');
+
+      return {
+        vehicleId,
+        status: hasOpenTask ? ('active' as const) : ('inactive' as const),
+        tasks: entries.map((tv) => ({
+          taskId: tv.taskId,
+          title: tv.task.title,
+          maintenanceType: tv.task.maintenanceType,
+          vehicleStatus: tv.status,
+          dueDate: tv.dueDate,
+          dueOdometerKm: tv.dueOdometerKm,
+          completionDate: tv.completionDate,
+          actualOdometerKm: tv.actualOdometerKm,
+          createdAt: tv.createdAt,
+          jobs: tv.vehicleJobs.map((vj) => ({
+            jobCode: vj.jobCode,
+            status: vj.status,
+          })),
+        })),
+      };
+    });
+
+    // Apply status filter
+    if (query.status === VehicleActivityFilterDto.active) {
+      vehicles = vehicles.filter((v) => v.status === 'active');
+    } else if (query.status === VehicleActivityFilterDto.inactive) {
+      vehicles = vehicles.filter((v) => v.status === 'inactive');
+    }
+
+    return { data: vehicles };
   }
 
   async getVehicleMaintenance(
@@ -327,7 +500,7 @@ export class TasksService {
       };
     }
 
-    const vehicleTasks = await this.prisma.maintenanceTaskVehicle.findMany({
+    const vehicleTasks = (await this.prisma.maintenanceTaskVehicle.findMany({
       where,
       include: {
         task: true,
@@ -347,7 +520,12 @@ export class TasksService {
           },
         },
       }),
-    }) as (MaintenanceTaskVehicle & { task: MaintenanceTask; vehicleJobs: any[]; workshop: any; cancellationReason: any })[];
+    })) as (MaintenanceTaskVehicle & {
+      task: MaintenanceTask;
+      vehicleJobs: any[];
+      workshop: any;
+      cancellationReason: any;
+    })[];
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -391,7 +569,7 @@ export class TasksService {
   ): Promise<void> {
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
-    if (taskVehicle.status !== 'open') {
+    if (taskVehicle.status !== 'open' && taskVehicle.status !== 'rescheduled') {
       throw new BadRequestException(
         `Cannot complete vehicle. Current status is ${taskVehicle.status}. Use corrections endpoint to modify.`,
       );
@@ -468,7 +646,7 @@ export class TasksService {
   ): Promise<void> {
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
-    if (taskVehicle.status !== 'open') {
+    if (taskVehicle.status !== 'open' && taskVehicle.status !== 'rescheduled') {
       throw new BadRequestException(
         `Cannot cancel vehicle. Current status is ${taskVehicle.status}. Use corrections endpoint to modify.`,
       );
@@ -538,6 +716,29 @@ export class TasksService {
       );
     }
 
+    let rescheduleReasonId: string | null = null;
+    let rescheduleReasonCustom: string | null = null;
+
+    if (dto.rescheduleReason.mode === RescheduleReasonModeDto.master) {
+      if (!dto.rescheduleReason.reasonId) {
+        throw new BadRequestException(
+          'reasonId is required when mode is master',
+        );
+      }
+      await this.referenceService.getReasonById(
+        dto.rescheduleReason.reasonId,
+        tenantId,
+      );
+      rescheduleReasonId = dto.rescheduleReason.reasonId;
+    } else {
+      if (!dto.rescheduleReason.customReason) {
+        throw new BadRequestException(
+          'customReason is required when mode is custom',
+        );
+      }
+      rescheduleReasonCustom = dto.rescheduleReason.customReason;
+    }
+
     const previousValue = { ...taskVehicle };
 
     await this.prisma.maintenanceTaskVehicle.update({
@@ -549,7 +750,8 @@ export class TasksService {
         rescheduleOriginalDueDate: new Date(dto.originalDate),
         rescheduleNewDueDate: new Date(dto.newScheduledDate),
         rescheduleOdometerKm: dto.rescheduleOdometerKm,
-        rescheduleReason: dto.reason,
+        rescheduleReasonId,
+        rescheduleReasonCustom,
       },
     });
 
@@ -596,7 +798,8 @@ export class TasksService {
       'cancellationReasonCustom',
       'rescheduleOriginalDueDate',
       'rescheduleNewDueDate',
-      'rescheduleReason',
+      'rescheduleReasonId',
+      'rescheduleReasonCustom',
       'rescheduleOdometerKm',
     ];
 
