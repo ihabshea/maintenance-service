@@ -55,7 +55,7 @@ export interface VehicleWithOverdue extends MaintenanceTaskVehicle {
 export interface TaskWithDetails extends MaintenanceTask {
   completion: 'completed' | 'incompleted';
   vehicles: VehicleWithOverdue[];
-  jobs: Array<{
+  checklist: Array<{
     jobCode: string;
     label: string;
     sortOrder: number;
@@ -184,15 +184,17 @@ export class TasksService {
     const existingVehicleIds = new Set(
       existingVehicles.map((v) => v.vehicleId),
     );
-    const newVehicles = dto.vehicles.filter(
-      (v) => !existingVehicleIds.has(v.vehicleId),
-    );
 
-    if (newVehicles.length === 0) {
-      throw new ConflictException(
-        'All vehicles are already assigned to this task',
-      );
+    // Fail on first duplicate (matches mock behavior)
+    for (const v of dto.vehicles) {
+      if (existingVehicleIds.has(v.vehicleId)) {
+        throw new ConflictException(
+          `Vehicle ${v.vehicleId} already exists on this task`,
+        );
+      }
     }
+
+    const newVehicles = dto.vehicles;
 
     const taskJobs = await this.prisma.maintenanceTaskJob.findMany({
       where: { tenantId, taskId },
@@ -262,6 +264,13 @@ export class TasksService {
 
     if (query.maintenanceType) {
       where.maintenanceType = query.maintenanceType as MaintenanceType;
+    }
+
+    if (query.status) {
+      where.vehicles = {
+        ...where.vehicles as any,
+        some: { status: query.status as TaskVehicleStatus },
+      };
     }
 
     if (query.completion === TaskCompletionFilterDto.completed) {
@@ -336,7 +345,7 @@ export class TasksService {
           })),
         };
       }),
-      jobs: task.jobs.map((j) => ({
+      checklist: task.jobs.map((j) => ({
         jobCode: j.jobCode,
         label: j.label,
         sortOrder: j.sortOrder,
@@ -415,7 +424,7 @@ export class TasksService {
         ? 'completed' as const
         : 'incompleted' as const,
       vehicles: vehiclesWithOverdue,
-      jobs: task.jobs.map((j) => ({
+      checklist: task.jobs.map((j) => ({
         jobCode: j.jobCode,
         label: j.label,
         sortOrder: j.sortOrder,
@@ -610,8 +619,8 @@ export class TasksService {
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
     if (taskVehicle.status !== 'open' && taskVehicle.status !== 'rescheduled') {
-      throw new BadRequestException(
-        `Cannot complete vehicle. Current status is ${taskVehicle.status}. Use corrections endpoint to modify.`,
+      throw new ConflictException(
+        `Vehicle is already ${taskVehicle.status}. Use corrections endpoint to modify.`,
       );
     }
 
@@ -694,8 +703,8 @@ export class TasksService {
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
     if (taskVehicle.status !== 'open' && taskVehicle.status !== 'rescheduled') {
-      throw new BadRequestException(
-        `Cannot cancel vehicle. Current status is ${taskVehicle.status}. Use corrections endpoint to modify.`,
+      throw new ConflictException(
+        `Vehicle is already ${taskVehicle.status}. Use corrections endpoint to modify.`,
       );
     }
 
@@ -765,8 +774,8 @@ export class TasksService {
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
     if (taskVehicle.status !== 'open') {
-      throw new BadRequestException(
-        `Cannot reschedule vehicle. Current status is ${taskVehicle.status}. Use corrections endpoint to modify.`,
+      throw new ConflictException(
+        `Vehicle is already ${taskVehicle.status}. Use corrections endpoint to modify.`,
       );
     }
 

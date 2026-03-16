@@ -40,6 +40,11 @@ export class TaskListFilterDto {
   @IsEnum(MaintenanceTypeDto)
   maintenanceType?: MaintenanceTypeDto;
 
+  @ApiPropertyOptional({ enum: TaskVehicleStatusDto, description: 'Filter tasks that have at least one vehicle with this status' })
+  @IsOptional()
+  @IsEnum(TaskVehicleStatusDto)
+  status?: TaskVehicleStatusDto;
+
   @ApiPropertyOptional({
     enum: TaskCompletionFilterDto,
     description:

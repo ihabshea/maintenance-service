@@ -4,7 +4,6 @@ import {
   IsOptional,
   IsEnum,
   IsInt,
-  IsUUID,
   IsArray,
   ValidateNested,
   IsDateString,
@@ -49,7 +48,7 @@ export class WorkshopDto {
 
   @ApiPropertyOptional({ description: 'Workshop ID (for master mode)' })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   workshopId?: string;
 
   @ApiPropertyOptional({ description: 'Custom workshop name' })
@@ -119,7 +118,7 @@ export class CancellationReasonDto {
 
   @ApiPropertyOptional({ description: 'Reason ID (for master mode)' })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   reasonId?: string;
 
   @ApiPropertyOptional({ description: 'Custom reason text' })
@@ -163,7 +162,7 @@ export class RescheduleReasonDto {
 
   @ApiPropertyOptional({ description: 'Reason ID (for master mode)' })
   @IsOptional()
-  @IsUUID()
+  @IsString()
   reasonId?: string;
 
   @ApiPropertyOptional({ description: 'Custom reason text' })
