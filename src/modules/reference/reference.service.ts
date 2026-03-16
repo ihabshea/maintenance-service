@@ -40,7 +40,7 @@ export class ReferenceService {
     const workshops = await this.prisma.workshop.findMany({
       where: {
         OR: [{ tenantId: null }, { tenantId }],
-        status: 'active',
+        status: { not: 'deleted' },
       },
       orderBy: [{ scope: 'asc' }, { name: 'asc' }],
       take: limit + 1,
@@ -111,11 +111,11 @@ export class ReferenceService {
 
     const where: {
       OR: Array<{ tenantId: string | null }>;
-      status: ReferenceStatus;
+      status: { not: ReferenceStatus };
       reasonType?: ReasonType;
     } = {
       OR: [{ tenantId: null }, { tenantId }],
-      status: 'active',
+      status: { not: 'deleted' as ReferenceStatus },
     };
 
     if (reasonType) {
@@ -248,7 +248,7 @@ export class ReferenceService {
 
     const updated = await this.prisma.workshop.update({
       where: { id },
-      data: { status: 'inactive' },
+      data: { status: 'deleted' },
     });
 
     await this.auditService.log({
@@ -329,7 +329,7 @@ export class ReferenceService {
 
     const updated = await this.prisma.reason.update({
       where: { id },
-      data: { status: 'inactive' },
+      data: { status: 'deleted' },
     });
 
     await this.auditService.log({

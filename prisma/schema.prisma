@@ -39,6 +39,7 @@ enum ReferenceScope {
 enum ReferenceStatus {
   active
   inactive
+  deleted
 }
 
 enum ReasonType {

@@ -289,13 +289,13 @@ describe('Reasons Reference Data', () => {
     });
 
     describe('Happy Path', () => {
-      it('should soft-delete reason by setting status to inactive', async () => {
+      it('should soft-delete reason by setting status to deleted', async () => {
         const response = await http.delete(API_PATHS.reason(tenantReasonId));
 
         assertOk(response);
         const data = extractData<any>(response);
 
-        expect(data.status).toBe('inactive');
+        expect(data.status).toBe('deleted');
         expect(data.id).toBe(tenantReasonId);
       });
 

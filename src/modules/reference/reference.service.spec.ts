@@ -63,7 +63,7 @@ describe('ReferenceService', () => {
       expect(mockPrismaService.workshop.findMany).toHaveBeenCalledWith({
         where: {
           OR: [{ tenantId: null }, { tenantId: mockTenantId }],
-          status: 'active',
+          status: { not: 'deleted' },
         },
         orderBy: [{ scope: 'asc' }, { name: 'asc' }],
         take: 21,
@@ -151,7 +151,7 @@ describe('ReferenceService', () => {
       expect(mockPrismaService.reason.findMany).toHaveBeenCalledWith({
         where: {
           OR: [{ tenantId: null }, { tenantId: mockTenantId }],
-          status: 'active',
+          status: { not: 'deleted' },
           reasonType: 'cancellation',
         },
         orderBy: [{ scope: 'asc' }, { label: 'asc' }],
@@ -294,8 +294,8 @@ describe('ReferenceService', () => {
       status: 'active',
     };
 
-    it('should soft-delete a tenant workshop by setting status to inactive', async () => {
-      const deletedWorkshop = { ...mockTenantWorkshop, status: 'inactive' };
+    it('should soft-delete a tenant workshop by setting status to deleted', async () => {
+      const deletedWorkshop = { ...mockTenantWorkshop, status: 'deleted' };
 
       mockPrismaService.workshop.findFirst.mockResolvedValue(
         mockTenantWorkshop,
@@ -310,9 +310,9 @@ describe('ReferenceService', () => {
 
       expect(mockPrismaService.workshop.update).toHaveBeenCalledWith({
         where: { id: 'ws-1' },
-        data: { status: 'inactive' },
+        data: { status: 'deleted' },
       });
-      expect(result.status).toBe('inactive');
+      expect(result.status).toBe('deleted');
       expect(mockAuditService.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'deleted',
@@ -429,8 +429,8 @@ describe('ReferenceService', () => {
       status: 'active',
     };
 
-    it('should soft-delete a tenant reason by setting status to inactive', async () => {
-      const deletedReason = { ...mockTenantReason, status: 'inactive' };
+    it('should soft-delete a tenant reason by setting status to deleted', async () => {
+      const deletedReason = { ...mockTenantReason, status: 'deleted' };
 
       mockPrismaService.reason.findFirst.mockResolvedValue(mockTenantReason);
       mockPrismaService.reason.update.mockResolvedValue(deletedReason);
@@ -439,9 +439,9 @@ describe('ReferenceService', () => {
 
       expect(mockPrismaService.reason.update).toHaveBeenCalledWith({
         where: { id: 'r-1' },
-        data: { status: 'inactive' },
+        data: { status: 'deleted' },
       });
-      expect(result.status).toBe('inactive');
+      expect(result.status).toBe('deleted');
       expect(mockAuditService.log).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'deleted',
