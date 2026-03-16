@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ["openssl"]
+
+[phases.install]
+cmds = ["yarn install --frozen-lockfile"]
+
+[phases.build]
+cmds = [
+  "npx prisma generate",
+  "yarn run build",
+]
+
+[start]
+cmd = "npx prisma migrate deploy && node dist/main"

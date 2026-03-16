@@ -31,6 +31,11 @@ export class MinioService implements OnModuleInit {
   }
 
   async onModuleInit() {
+    const endpoint = this.configService.get<string>('MINIO_ENDPOINT', 'localhost');
+    if (endpoint === 'disabled') {
+      this.logger.warn('MinIO is disabled — file uploads will not work');
+      return;
+    }
     await this.ensureBucketExists();
   }
 
