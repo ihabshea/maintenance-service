@@ -143,7 +143,7 @@ export class TasksService {
       tenantId,
       entityType: 'task',
       entityId: task.id,
-      action: 'created',
+      action: 'create',
       actor,
       newValue: { ...dto, id: task.id },
     });
@@ -154,7 +154,7 @@ export class TasksService {
           tenantId,
           entityType: 'task_vehicle' as const,
           entityId: task.id,
-          action: 'vehicle_added',
+          action: 'create',
           actor,
           newValue: { vehicleId: v.vehicleId, taskId: task.id },
         })),
@@ -232,7 +232,7 @@ export class TasksService {
         tenantId,
         entityType: 'task_vehicle' as const,
         entityId: task.id,
-        action: 'vehicle_added',
+        action: 'create',
         actor,
         newValue: { vehicleId: v.vehicleId, taskId },
       })),
@@ -350,6 +350,10 @@ export class TasksService {
     tenantId: string,
     taskId: string,
   ): Promise<TaskWithDetails> {
+    if (!TasksService.UUID_REGEX.test(taskId)) {
+      throw new NotFoundException(`Task with id ${taskId} not found`);
+    }
+
     const task = await this.prisma.maintenanceTask.findFirst({
       where: { id: taskId, tenantId },
       include: {
@@ -562,10 +566,33 @@ export class TasksService {
       }
 
       return {
-        id: vt.taskId,
-        ...vt,
+        id: `${vt.taskId}_${vt.vehicleId}`,
+        taskId: vt.taskId,
+        taskTitle: vt.task.title,
+        maintenanceType: vt.task.maintenanceType,
+        vehicleId: vt.vehicleId,
+        status: vt.status,
+        dueOdometerKm: vt.dueOdometerKm ?? null,
+        dueDate: vt.dueDate ?? null,
+        completionDate: vt.completionDate ?? null,
+        actualOdometerKm: vt.actualOdometerKm ?? null,
+        workshopId: vt.workshopId ?? null,
+        workshopCustom: vt.workshopCustom ?? null,
+        costAmount: vt.costAmount ?? null,
+        costCurrency: vt.costCurrency ?? null,
+        cancellationDate: vt.cancellationDate ?? null,
+        cancellationReasonId: vt.cancellationReasonId ?? null,
+        cancellationReasonCustom: vt.cancellationReasonCustom ?? null,
+        rescheduleOriginalDueDate: vt.rescheduleOriginalDueDate ?? null,
+        rescheduleNewDueDate: vt.rescheduleNewDueDate ?? null,
+        rescheduleOdometerKm: vt.rescheduleOdometerKm ?? null,
+        rescheduleReasonId: vt.rescheduleReasonId ?? null,
+        rescheduleReasonCustom: vt.rescheduleReasonCustom ?? null,
         overdue,
         overdueComputation,
+        jobs: vt.vehicleJobs.map((j: any) => ({ jobCode: j.jobCode, status: j.status })),
+        createdAt: vt.createdAt,
+        updatedAt: vt.updatedAt,
       };
     });
 
@@ -643,7 +670,7 @@ export class TasksService {
       tenantId,
       entityType: 'task_vehicle',
       entityId: taskId,
-      action: 'status_completed',
+      action: 'complete',
       actor,
       previousValue: previousValue as unknown as Record<string, unknown>,
       newValue: { vehicleId, status: 'completed', ...dto },
@@ -714,7 +741,7 @@ export class TasksService {
       tenantId,
       entityType: 'task_vehicle',
       entityId: taskId,
-      action: 'status_cancelled',
+      action: 'cancel',
       actor,
       previousValue: previousValue as unknown as Record<string, unknown>,
       newValue: { vehicleId, status: 'cancelled', ...dto },
@@ -786,7 +813,7 @@ export class TasksService {
       tenantId,
       entityType: 'task_vehicle',
       entityId: taskId,
-      action: 'status_rescheduled',
+      action: 'reschedule',
       actor,
       previousValue: previousValue as unknown as Record<string, unknown>,
       newValue: { vehicleId, status: 'rescheduled', ...dto },
@@ -864,7 +891,7 @@ export class TasksService {
       tenantId,
       entityType: 'task_vehicle',
       entityId: taskId,
-      action: 'correction_applied',
+      action: 'correction',
       actor,
       previousValue: previousValue as unknown as Record<string, unknown>,
       newValue: {
@@ -936,10 +963,16 @@ export class TasksService {
     };
   }
 
+  private static readonly UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   private async getTaskByIdInternal(
     tenantId: string,
     taskId: string,
   ): Promise<MaintenanceTask> {
+    if (!TasksService.UUID_REGEX.test(taskId)) {
+      throw new NotFoundException(`Task with id ${taskId} not found`);
+    }
+
     const task = await this.prisma.maintenanceTask.findFirst({
       where: { id: taskId, tenantId },
     });
