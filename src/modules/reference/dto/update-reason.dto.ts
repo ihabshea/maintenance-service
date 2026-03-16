@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsIn, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ReferenceStatus } from '@prisma/client';
 
@@ -9,8 +9,8 @@ export class UpdateReasonDto {
   @MaxLength(255)
   label?: string;
 
-  @ApiPropertyOptional({ enum: ReferenceStatus, description: 'Reason status' })
+  @ApiPropertyOptional({ enum: ['active', 'inactive'], description: 'Reason status' })
   @IsOptional()
-  @IsEnum(ReferenceStatus)
+  @IsIn(['active', 'inactive'])
   status?: ReferenceStatus;
 }

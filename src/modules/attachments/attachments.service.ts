@@ -61,7 +61,7 @@ export class AttachmentsService {
       tenantId,
       entityType: 'attachment',
       entityId: attachment.id,
-      action: 'created',
+      action: 'create',
       actor,
       newValue: attachment as unknown as Record<string, unknown>,
     });

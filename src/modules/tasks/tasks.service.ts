@@ -43,7 +43,7 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 
 export interface VehicleWithOverdue extends MaintenanceTaskVehicle {
-  overdue: boolean | null;
+  overdue: boolean;
   overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable';
   vehicleJobs: Array<{
     jobCode: string;
@@ -74,7 +74,7 @@ export class TasksService {
     tenantId: string,
     dto: CreateTaskDto,
     actor: string,
-  ): Promise<MaintenanceTask> {
+  ): Promise<TaskWithDetails> {
     const task = await this.prisma.$transaction(async (tx) => {
       const createdTask = await tx.maintenanceTask.create({
         data: {
@@ -161,7 +161,7 @@ export class TasksService {
       );
     }
 
-    return task;
+    return this.getTaskById(tenantId, task.id);
   }
 
   async addVehicles(
@@ -316,11 +316,8 @@ export class TasksService {
         ? 'completed' as const
         : 'incompleted' as const,
       vehicles: task.vehicles.map((v) => {
-        let overdue: boolean | null = null;
-        let overdueComputation:
-          | 'computed'
-          | 'insufficient_data'
-          | 'not_applicable' = 'not_applicable';
+        let overdue = false;
+        let overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable' = 'not_applicable';
 
         if (v.status === 'open' && task.maintenanceType === 'preventive') {
           if (v.dueDate) {
@@ -328,8 +325,8 @@ export class TasksService {
             dueDate.setHours(0, 0, 0, 0);
             overdue = dueDate < today;
             overdueComputation = 'computed';
-          } else if (v.dueOdometerKm !== null) {
-            overdue = null;
+          } else {
+            overdue = false;
             overdueComputation = 'insufficient_data';
           }
         }
@@ -388,11 +385,8 @@ export class TasksService {
     today.setHours(0, 0, 0, 0);
 
     const vehiclesWithOverdue: VehicleWithOverdue[] = task.vehicles.map((v) => {
-      let overdue: boolean | null = null;
-      let overdueComputation:
-        | 'computed'
-        | 'insufficient_data'
-        | 'not_applicable' = 'not_applicable';
+      let overdue = false;
+      let overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable' = 'not_applicable';
 
       if (v.status === 'open' && task.maintenanceType === 'preventive') {
         if (v.dueDate) {
@@ -400,8 +394,8 @@ export class TasksService {
           dueDate.setHours(0, 0, 0, 0);
           overdue = dueDate < today;
           overdueComputation = 'computed';
-        } else if (v.dueOdometerKm !== null) {
-          overdue = null;
+        } else {
+          overdue = false;
           overdueComputation = 'insufficient_data';
         }
       }
@@ -556,11 +550,8 @@ export class TasksService {
     today.setHours(0, 0, 0, 0);
 
     const mappedResults = vehicleTasks.map((vt) => {
-      let overdue: boolean | null = null;
-      let overdueComputation:
-        | 'computed'
-        | 'insufficient_data'
-        | 'not_applicable' = 'not_applicable';
+      let overdue = false;
+      let overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable' = 'not_applicable';
 
       if (vt.status === 'open' && vt.task.maintenanceType === 'preventive') {
         if (vt.dueDate) {
@@ -568,8 +559,8 @@ export class TasksService {
           dueDate.setHours(0, 0, 0, 0);
           overdue = dueDate < today;
           overdueComputation = 'computed';
-        } else if (vt.dueOdometerKm !== null) {
-          overdue = null;
+        } else {
+          overdue = false;
           overdueComputation = 'insufficient_data';
         }
       }
@@ -926,7 +917,7 @@ export class TasksService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let overdue: boolean | null = null;
+    let overdue = false;
     let overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable' = 'not_applicable';
 
     if (v.status === 'open' && task.maintenanceType === 'preventive') {
@@ -935,8 +926,8 @@ export class TasksService {
         dueDate.setHours(0, 0, 0, 0);
         overdue = dueDate < today;
         overdueComputation = 'computed';
-      } else if (v.dueOdometerKm !== null) {
-        overdue = null;
+      } else {
+        overdue = false;
         overdueComputation = 'insufficient_data';
       }
     }

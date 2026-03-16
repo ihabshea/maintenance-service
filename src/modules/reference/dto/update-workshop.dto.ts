@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsIn, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ReferenceStatus } from '@prisma/client';
 
@@ -16,10 +16,10 @@ export class UpdateWorkshopDto {
   location?: string;
 
   @ApiPropertyOptional({
-    enum: ReferenceStatus,
+    enum: ['active', 'inactive'],
     description: 'Workshop status',
   })
   @IsOptional()
-  @IsEnum(ReferenceStatus)
+  @IsIn(['active', 'inactive'])
   status?: ReferenceStatus;
 }
