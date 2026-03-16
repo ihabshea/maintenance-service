@@ -74,7 +74,7 @@ export class TasksService {
     tenantId: string,
     dto: CreateTaskDto,
     actor: string,
-  ): Promise<TaskWithDetails> {
+  ) {
     const task = await this.prisma.$transaction(async (tx) => {
       const createdTask = await tx.maintenanceTask.create({
         data: {
@@ -256,7 +256,7 @@ export class TasksService {
   async listTasks(
     tenantId: string,
     query: TaskListQueryDto,
-  ): Promise<PaginatedResult<TaskWithDetails>> {
+  ) {
     const limit = query.limit ?? 20;
     const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
 
@@ -310,44 +310,7 @@ export class TasksService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const mapped: TaskWithDetails[] = tasks.map((task) => ({
-      ...task,
-      completion: task.vehicles.length > 0 && task.vehicles.every((v) => v.status !== 'open')
-        ? 'completed' as const
-        : 'incompleted' as const,
-      vehicles: task.vehicles.map((v) => {
-        let overdue = false;
-        let overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable' = 'not_applicable';
-
-        if (v.status === 'open' && task.maintenanceType === 'preventive') {
-          if (v.dueDate) {
-            const dueDate = new Date(v.dueDate);
-            dueDate.setHours(0, 0, 0, 0);
-            overdue = dueDate < today;
-            overdueComputation = 'computed';
-          } else {
-            overdue = false;
-            overdueComputation = 'insufficient_data';
-          }
-        }
-
-        return {
-          ...v,
-          overdue,
-          overdueComputation,
-          vehicleJobs: v.vehicleJobs.map((vj) => ({
-            jobCode: vj.jobCode,
-            status: vj.status,
-            updatedAt: vj.updatedAt,
-          })),
-        };
-      }),
-      checklist: task.jobs.map((j) => ({
-        jobCode: j.jobCode,
-        label: j.label,
-        sortOrder: j.sortOrder,
-      })),
-    }));
+    const mapped = tasks.map((task) => this.buildTaskResponse(task, today));
 
     return buildPaginatedResult(mapped, limit);
   }
@@ -355,7 +318,7 @@ export class TasksService {
   async getTaskById(
     tenantId: string,
     taskId: string,
-  ): Promise<TaskWithDetails> {
+  ) {
     if (!TasksService.UUID_REGEX.test(taskId)) {
       throw new NotFoundException(`Task with id ${taskId} not found`);
     }
@@ -384,46 +347,7 @@ export class TasksService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const vehiclesWithOverdue: VehicleWithOverdue[] = task.vehicles.map((v) => {
-      let overdue = false;
-      let overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable' = 'not_applicable';
-
-      if (v.status === 'open' && task.maintenanceType === 'preventive') {
-        if (v.dueDate) {
-          const dueDate = new Date(v.dueDate);
-          dueDate.setHours(0, 0, 0, 0);
-          overdue = dueDate < today;
-          overdueComputation = 'computed';
-        } else {
-          overdue = false;
-          overdueComputation = 'insufficient_data';
-        }
-      }
-
-      return {
-        ...v,
-        overdue,
-        overdueComputation,
-        vehicleJobs: v.vehicleJobs.map((vj) => ({
-          jobCode: vj.jobCode,
-          status: vj.status,
-          updatedAt: vj.updatedAt,
-        })),
-      };
-    });
-
-    return {
-      ...task,
-      completion: vehiclesWithOverdue.length > 0 && vehiclesWithOverdue.every((v) => v.status !== 'open')
-        ? 'completed' as const
-        : 'incompleted' as const,
-      vehicles: vehiclesWithOverdue,
-      checklist: task.jobs.map((j) => ({
-        jobCode: j.jobCode,
-        label: j.label,
-        sortOrder: j.sortOrder,
-      })),
-    };
+    return this.buildTaskResponse(task, today);
   }
 
   async getBulkVehicleMaintenance(
@@ -960,6 +884,33 @@ export class TasksService {
       })),
       createdAt: v.createdAt,
       updatedAt: v.updatedAt,
+    };
+  }
+
+  private buildTaskResponse(task: any, today: Date) {
+    return {
+      id: task.id,
+      title: task.title,
+      maintenanceType: task.maintenanceType,
+      triggerMode: task.triggerMode ?? null,
+      triggerKm: task.triggerKm ?? null,
+      triggerDate: task.triggerDate ?? null,
+      remindBeforeKm: task.remindBeforeKm ?? null,
+      remindBeforeDays: task.remindBeforeDays ?? null,
+      notes: task.notes ?? null,
+      sourceGroupId: task.sourceGroupId ?? null,
+      selectionContext: task.selectionContext ?? null,
+      checklist: (task.jobs || []).map((j: any) => ({
+        jobCode: j.jobCode,
+        label: j.label,
+        sortOrder: j.sortOrder,
+      })),
+      completion: task.vehicles.length > 0 && task.vehicles.every((v: any) => v.status !== 'open')
+        ? 'completed'
+        : 'incompleted',
+      vehicles: task.vehicles.map((v: any) => this.buildVehicleResponse(task, v)),
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
     };
   }
 
