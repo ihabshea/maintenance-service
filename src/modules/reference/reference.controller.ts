@@ -20,7 +20,6 @@ import { UpdateWorkshopDto } from './dto/update-workshop.dto';
 import { UpdateReasonDto } from './dto/update-reason.dto';
 import { ReasonsQueryDto } from './dto/query.dto';
 import { TenantId, Actor } from '../../common/decorators';
-import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Reference Data')
 @ApiHeader({ name: 'X-Tenant-Id', required: true })
@@ -31,9 +30,8 @@ export class ReferenceController {
   @Get('workshops')
   async getWorkshops(
     @TenantId() tenantId: string,
-    @Query() query: PaginationQueryDto,
   ) {
-    return this.referenceService.getWorkshops(tenantId, query);
+    return this.referenceService.getWorkshops(tenantId);
   }
 
   @Post('workshops')
@@ -63,7 +61,7 @@ export class ReferenceController {
     @TenantId() tenantId: string,
     @Query() query: ReasonsQueryDto,
   ) {
-    return this.referenceService.getReasons(tenantId, query.type, query);
+    return this.referenceService.getReasons(tenantId, query.type);
   }
 
   @Post('reasons')

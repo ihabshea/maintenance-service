@@ -58,6 +58,49 @@ export class UploadsService {
     return upload;
   }
 
+  async uploadFromJson(
+    tenantId: string,
+    fileName: string,
+    contentType: string,
+    fileSize: number,
+    actor: string,
+  ): Promise<Upload> {
+    const uploadId = uuidv4();
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const objectKey = `${tenantId}/${uploadId}-${sanitizedFileName}`;
+
+    const fileUrl = this.minioService.getFileUrl(objectKey);
+
+    const upload = await this.prisma.upload.create({
+      data: {
+        id: uploadId,
+        tenantId,
+        objectKey,
+        fileUrl,
+        fileName,
+        contentType,
+        fileSize,
+        uploadedBy: actor,
+      },
+    });
+
+    await this.auditService.log({
+      tenantId,
+      entityType: 'upload',
+      entityId: upload.id,
+      action: 'create',
+      actor,
+      newValue: {
+        id: upload.id,
+        fileName: upload.fileName,
+        contentType: upload.contentType,
+        fileSize: Number(upload.fileSize),
+      },
+    });
+
+    return upload;
+  }
+
   async claimUpload(tenantId: string, fileUrl: string): Promise<void> {
     const upload = await this.prisma.upload.findFirst({
       where: { tenantId, fileUrl },

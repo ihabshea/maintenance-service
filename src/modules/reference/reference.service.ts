@@ -16,12 +16,6 @@ import {
   Workshop,
   Reason,
 } from '@prisma/client';
-import {
-  PaginationQueryDto,
-  decodeCursor,
-  buildPaginatedResult,
-  PaginatedResult,
-} from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class ReferenceService {
@@ -32,25 +26,16 @@ export class ReferenceService {
 
   async getWorkshops(
     tenantId: string,
-    query: PaginationQueryDto,
-  ): Promise<PaginatedResult<Workshop>> {
-    const limit = query.limit ?? 20;
-    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-
+  ): Promise<Workshop[]> {
     const workshops = await this.prisma.workshop.findMany({
       where: {
         OR: [{ tenantId: null }, { tenantId }],
         status: { not: 'deleted' },
       },
       orderBy: [{ scope: 'asc' }, { name: 'asc' }],
-      take: limit + 1,
-      ...(cursorData && {
-        skip: 1,
-        cursor: { id: cursorData.id },
-      }),
     });
 
-    return buildPaginatedResult(workshops, limit);
+    return workshops;
   }
 
   async getWorkshopById(id: string, tenantId: string) {
@@ -104,11 +89,7 @@ export class ReferenceService {
   async getReasons(
     tenantId: string,
     reasonType: string | undefined,
-    query: PaginationQueryDto,
-  ): Promise<PaginatedResult<Reason>> {
-    const limit = query.limit ?? 20;
-    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-
+  ): Promise<Reason[]> {
     const where: {
       OR: Array<{ tenantId: string | null }>;
       status: { not: ReferenceStatus };
@@ -125,14 +106,9 @@ export class ReferenceService {
     const reasons = await this.prisma.reason.findMany({
       where,
       orderBy: [{ scope: 'asc' }, { label: 'asc' }],
-      take: limit + 1,
-      ...(cursorData && {
-        skip: 1,
-        cursor: { id: cursorData.id },
-      }),
     });
 
-    return buildPaginatedResult(reasons, limit);
+    return reasons;
   }
 
   async getReasonById(id: string, tenantId: string) {

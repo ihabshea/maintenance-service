@@ -29,7 +29,6 @@ import {
 import {
   decodeCursor,
   buildPaginatedResult,
-  PaginatedResult,
 } from '../../common/dto/pagination.dto';
 import {
   MaintenanceType,
@@ -392,10 +391,10 @@ export class TasksService {
           title: tv.task.title,
           maintenanceType: tv.task.maintenanceType,
           vehicleStatus: tv.status,
-          dueDate: tv.dueDate,
-          dueOdometerKm: tv.dueOdometerKm,
-          completionDate: tv.completionDate,
-          actualOdometerKm: tv.actualOdometerKm,
+          dueDate: tv.dueDate ?? null,
+          dueOdometerKm: tv.dueOdometerKm ?? null,
+          completionDate: tv.completionDate ?? null,
+          actualOdometerKm: tv.actualOdometerKm ?? null,
           createdAt: tv.createdAt,
           jobs: tv.vehicleJobs.map((vj) => ({
             jobCode: vj.jobCode,
@@ -419,10 +418,7 @@ export class TasksService {
     tenantId: string,
     vehicleId: number,
     query: VehicleMaintenanceQueryDto,
-  ): Promise<PaginatedResult<Record<string, unknown>>> {
-    const limit = query.limit ?? 20;
-    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-
+  ) {
     const where: {
       tenantId: string;
       vehicleId: number;
@@ -452,17 +448,6 @@ export class TasksService {
         cancellationReason: true,
       },
       orderBy: { createdAt: 'desc' },
-      take: limit + 1,
-      ...(cursorData && {
-        skip: 1,
-        cursor: {
-          tenantId_taskId_vehicleId: {
-            tenantId,
-            taskId: cursorData.id,
-            vehicleId,
-          },
-        },
-      }),
     })) as (MaintenanceTaskVehicle & {
       task: MaintenanceTask;
       vehicleJobs: any[];
@@ -490,7 +475,6 @@ export class TasksService {
       }
 
       return {
-        id: `${vt.taskId}_${vt.vehicleId}`,
         taskId: vt.taskId,
         taskTitle: vt.task.title,
         maintenanceType: vt.task.maintenanceType,
@@ -503,7 +487,7 @@ export class TasksService {
         workshopId: vt.workshopId ?? null,
         workshopCustom: vt.workshopCustom ?? null,
         costAmount: vt.costAmount ?? null,
-        costCurrency: vt.costCurrency ?? null,
+        costCurrency: vt.costAmount != null ? vt.costCurrency : null,
         cancellationDate: vt.cancellationDate ?? null,
         cancellationReasonId: vt.cancellationReasonId ?? null,
         cancellationReasonCustom: vt.cancellationReasonCustom ?? null,
@@ -520,7 +504,7 @@ export class TasksService {
       };
     });
 
-    return buildPaginatedResult(mappedResults, limit);
+    return mappedResults;
   }
 
   async completeVehicle(
@@ -762,7 +746,7 @@ export class TasksService {
 
     if (taskVehicle.status === 'open') {
       throw new BadRequestException(
-        'Corrections are only allowed for completed, cancelled, or rescheduled records',
+        'Cannot apply corrections to a vehicle with "open" status. Use status transition endpoints instead.',
       );
     }
 
@@ -867,7 +851,7 @@ export class TasksService {
       workshopId: v.workshopId ?? null,
       workshopCustom: v.workshopCustom ?? null,
       costAmount: v.costAmount ?? null,
-      costCurrency: v.costCurrency ?? null,
+      costCurrency: v.costAmount != null ? v.costCurrency : null,
       cancellationDate: v.cancellationDate ?? null,
       cancellationReasonId: v.cancellationReasonId ?? null,
       cancellationReasonCustom: v.cancellationReasonCustom ?? null,

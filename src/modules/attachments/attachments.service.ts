@@ -8,12 +8,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { CreateAttachmentDto } from './dto/create-attachment.dto';
-import {
-  PaginationQueryDto,
-  decodeCursor,
-  buildPaginatedResult,
-  PaginatedResult,
-} from '../../common/dto/pagination.dto';
 import { MaintenanceAttachment } from '@prisma/client';
 
 @Injectable()
@@ -73,11 +67,7 @@ export class AttachmentsService {
     tenantId: string,
     taskId: string,
     vehicleId: number,
-    query: PaginationQueryDto,
-  ): Promise<PaginatedResult<MaintenanceAttachment>> {
-    const limit = query.limit ?? 20;
-    const cursorData = query.cursor ? decodeCursor(query.cursor) : null;
-
+  ): Promise<MaintenanceAttachment[]> {
     const taskVehicle = await this.prisma.maintenanceTaskVehicle.findFirst({
       where: { tenantId, taskId, vehicleId },
     });
@@ -91,13 +81,8 @@ export class AttachmentsService {
     const attachments = await this.prisma.maintenanceAttachment.findMany({
       where: { tenantId, taskId, vehicleId },
       orderBy: { uploadedAt: 'desc' },
-      take: limit + 1,
-      ...(cursorData && {
-        skip: 1,
-        cursor: { id: cursorData.id },
-      }),
     });
 
-    return buildPaginatedResult(attachments, limit);
+    return attachments;
   }
 }

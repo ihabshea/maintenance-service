@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Body,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
@@ -30,7 +31,7 @@ export class UploadsController {
   }
 
   @Post()
-  @ApiConsumes('multipart/form-data')
+  @ApiConsumes('multipart/form-data', 'application/json')
   @ApiBody({
     schema: {
       type: 'object',
@@ -47,18 +48,51 @@ export class UploadsController {
     @TenantId() tenantId: string,
     @Actor() actor: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
   ): Promise<{ data: UploadResponseDto }> {
-    if (!file) {
-      throw new BadRequestException('No file provided');
+    if (file) {
+      if (file.size > this.maxFileSizeBytes) {
+        throw new BadRequestException(
+          `File size exceeds maximum allowed (${this.maxFileSizeBytes / 1024 / 1024}MB)`,
+        );
+      }
+
+      const upload = await this.uploadsService.uploadFile(tenantId, file, actor);
+
+      return {
+        data: {
+          id: upload.id,
+          tenantId: upload.tenantId,
+          objectKey: upload.objectKey,
+          fileUrl: upload.fileUrl,
+          fileName: upload.fileName,
+          contentType: upload.contentType,
+          fileSize: Number(upload.fileSize),
+          uploadedBy: upload.uploadedBy,
+          createdAt: upload.createdAt,
+        },
+      };
     }
 
-    if (file.size > this.maxFileSizeBytes) {
-      throw new BadRequestException(
-        `File size exceeds maximum allowed (${this.maxFileSizeBytes / 1024 / 1024}MB)`,
-      );
+    // JSON body fallback
+    const fileName = body?.fileName;
+    const contentType = body?.contentType || 'application/octet-stream';
+    const fileSize = body?.fileSize;
+
+    if (!fileName) {
+      throw new BadRequestException('fileName is required');
+    }
+    if (fileSize === undefined || fileSize === null) {
+      throw new BadRequestException('fileSize is required');
     }
 
-    const upload = await this.uploadsService.uploadFile(tenantId, file, actor);
+    const upload = await this.uploadsService.uploadFromJson(
+      tenantId,
+      fileName,
+      contentType,
+      fileSize,
+      actor,
+    );
 
     return {
       data: {
