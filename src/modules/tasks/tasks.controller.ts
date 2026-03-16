@@ -67,8 +67,8 @@ export class TasksController {
     @Param('taskId') taskId: string,
     @Body() dto: AddVehiclesDto,
   ) {
-    await this.tasksService.addVehicles(tenantId, taskId, dto, actor);
-    return { data: { success: true } };
+    const vehicles = await this.tasksService.addVehicles(tenantId, taskId, dto, actor);
+    return { data: vehicles };
   }
 
   @Post('vehicles/maintenance-status')
@@ -102,14 +102,14 @@ export class TasksController {
     @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: CompleteVehicleDto,
   ) {
-    await this.tasksService.completeVehicle(
+    const vehicle = await this.tasksService.completeVehicle(
       tenantId,
       taskId,
       vehicleId,
       dto,
       actor,
     );
-    return { data: { success: true } };
+    return { data: vehicle };
   }
 
   @Patch('maintenance/tasks/:taskId/vehicles/:vehicleId/status/cancelled')
@@ -123,14 +123,14 @@ export class TasksController {
     @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: CancelVehicleDto,
   ) {
-    await this.tasksService.cancelVehicle(
+    const vehicle = await this.tasksService.cancelVehicle(
       tenantId,
       taskId,
       vehicleId,
       dto,
       actor,
     );
-    return { data: { success: true } };
+    return { data: vehicle };
   }
 
   @Patch('maintenance/tasks/:taskId/vehicles/:vehicleId/status/rescheduled')
@@ -144,14 +144,14 @@ export class TasksController {
     @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: RescheduleVehicleDto,
   ) {
-    await this.tasksService.rescheduleVehicle(
+    const vehicle = await this.tasksService.rescheduleVehicle(
       tenantId,
       taskId,
       vehicleId,
       dto,
       actor,
     );
-    return { data: { success: true } };
+    return { data: vehicle };
   }
 
   @Post('maintenance/tasks/:taskId/vehicles/:vehicleId/corrections')
@@ -164,13 +164,13 @@ export class TasksController {
     @Param('vehicleId', ParseIntPipe) vehicleId: number,
     @Body() dto: CorrectionDto,
   ) {
-    await this.tasksService.applyCorrection(
+    const result = await this.tasksService.applyCorrection(
       tenantId,
       taskId,
       vehicleId,
       dto,
       actor,
     );
-    return { data: { success: true } };
+    return { data: result };
   }
 }

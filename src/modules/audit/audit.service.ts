@@ -22,8 +22,8 @@ export interface AuditLogEntry {
 export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async log(entry: AuditLogEntry): Promise<void> {
-    await this.prisma.maintenanceAuditLog.create({
+  async log(entry: AuditLogEntry) {
+    return this.prisma.maintenanceAuditLog.create({
       data: {
         tenantId: entry.tenantId,
         entityType: entry.entityType,

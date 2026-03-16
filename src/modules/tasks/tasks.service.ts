@@ -169,7 +169,7 @@ export class TasksService {
     taskId: string,
     dto: AddVehiclesDto,
     actor: string,
-  ): Promise<void> {
+  ) {
     const task = await this.getTaskByIdInternal(tenantId, taskId);
 
     const existingVehicles = await this.prisma.maintenanceTaskVehicle.findMany({
@@ -237,6 +237,18 @@ export class TasksService {
         newValue: { vehicleId: v.vehicleId, taskId },
       })),
     );
+
+    // Return the created vehicles with full details
+    const createdVehicles = await this.prisma.maintenanceTaskVehicle.findMany({
+      where: {
+        tenantId,
+        taskId,
+        vehicleId: { in: newVehicles.map((v) => v.vehicleId) },
+      },
+      include: { vehicleJobs: true },
+    });
+
+    return createdVehicles.map((v) => this.buildVehicleResponse(task, v));
   }
 
   async listTasks(
@@ -566,7 +578,8 @@ export class TasksService {
     vehicleId: number,
     dto: CompleteVehicleDto,
     actor: string,
-  ): Promise<void> {
+  ) {
+    const task = await this.getTaskByIdInternal(tenantId, taskId);
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
     if (taskVehicle.status !== 'open' && taskVehicle.status !== 'rescheduled') {
@@ -635,6 +648,12 @@ export class TasksService {
       previousValue: previousValue as unknown as Record<string, unknown>,
       newValue: { vehicleId, status: 'completed', ...dto },
     });
+
+    const updated = await this.prisma.maintenanceTaskVehicle.findFirst({
+      where: { tenantId, taskId, vehicleId },
+      include: { vehicleJobs: true },
+    });
+    return this.buildVehicleResponse(task, updated!);
   }
 
   async cancelVehicle(
@@ -643,7 +662,8 @@ export class TasksService {
     vehicleId: number,
     dto: CancelVehicleDto,
     actor: string,
-  ): Promise<void> {
+  ) {
+    const task = await this.getTaskByIdInternal(tenantId, taskId);
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
     if (taskVehicle.status !== 'open' && taskVehicle.status !== 'rescheduled') {
@@ -699,6 +719,12 @@ export class TasksService {
       previousValue: previousValue as unknown as Record<string, unknown>,
       newValue: { vehicleId, status: 'cancelled', ...dto },
     });
+
+    const updated = await this.prisma.maintenanceTaskVehicle.findFirst({
+      where: { tenantId, taskId, vehicleId },
+      include: { vehicleJobs: true },
+    });
+    return this.buildVehicleResponse(task, updated!);
   }
 
   async rescheduleVehicle(
@@ -707,7 +733,8 @@ export class TasksService {
     vehicleId: number,
     dto: RescheduleVehicleDto,
     actor: string,
-  ): Promise<void> {
+  ) {
+    const task = await this.getTaskByIdInternal(tenantId, taskId);
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
     if (taskVehicle.status !== 'open') {
@@ -764,6 +791,12 @@ export class TasksService {
       previousValue: previousValue as unknown as Record<string, unknown>,
       newValue: { vehicleId, status: 'rescheduled', ...dto },
     });
+
+    const updated = await this.prisma.maintenanceTaskVehicle.findFirst({
+      where: { tenantId, taskId, vehicleId },
+      include: { vehicleJobs: true },
+    });
+    return this.buildVehicleResponse(task, updated!);
   }
 
   async applyCorrection(
@@ -772,7 +805,8 @@ export class TasksService {
     vehicleId: number,
     dto: CorrectionDto,
     actor: string,
-  ): Promise<void> {
+  ) {
+    const task = await this.getTaskByIdInternal(tenantId, taskId);
     const taskVehicle = await this.getTaskVehicle(tenantId, taskId, vehicleId);
 
     if (taskVehicle.status === 'open') {
@@ -826,7 +860,7 @@ export class TasksService {
       data: updateData,
     });
 
-    await this.auditService.log({
+    const auditEntry = await this.auditService.log({
       tenantId,
       entityType: 'task_vehicle',
       entityId: taskId,
@@ -839,6 +873,67 @@ export class TasksService {
         changes: dto.patch,
       },
     });
+
+    const updated = await this.prisma.maintenanceTaskVehicle.findFirst({
+      where: { tenantId, taskId, vehicleId },
+      include: { vehicleJobs: true },
+    });
+
+    return {
+      success: true,
+      correctionId: auditEntry.id,
+      vehicle: this.buildVehicleResponse(task, updated!),
+    };
+  }
+
+  private buildVehicleResponse(task: MaintenanceTask, v: MaintenanceTaskVehicle & { vehicleJobs?: any[] }) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let overdue: boolean | null = null;
+    let overdueComputation: 'computed' | 'insufficient_data' | 'not_applicable' = 'not_applicable';
+
+    if (v.status === 'open' && task.maintenanceType === 'preventive') {
+      if (v.dueDate) {
+        const dueDate = new Date(v.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        overdue = dueDate < today;
+        overdueComputation = 'computed';
+      } else if (v.dueOdometerKm !== null) {
+        overdue = null;
+        overdueComputation = 'insufficient_data';
+      }
+    }
+
+    return {
+      id: `${v.taskId}_${v.vehicleId}`,
+      vehicleId: v.vehicleId,
+      status: v.status,
+      dueOdometerKm: v.dueOdometerKm ?? null,
+      dueDate: v.dueDate ?? null,
+      completionDate: v.completionDate ?? null,
+      actualOdometerKm: v.actualOdometerKm ?? null,
+      workshopId: v.workshopId ?? null,
+      workshopCustom: v.workshopCustom ?? null,
+      costAmount: v.costAmount ?? null,
+      costCurrency: v.costCurrency ?? null,
+      cancellationDate: v.cancellationDate ?? null,
+      cancellationReasonId: v.cancellationReasonId ?? null,
+      cancellationReasonCustom: v.cancellationReasonCustom ?? null,
+      rescheduleOriginalDueDate: v.rescheduleOriginalDueDate ?? null,
+      rescheduleNewDueDate: v.rescheduleNewDueDate ?? null,
+      rescheduleOdometerKm: v.rescheduleOdometerKm ?? null,
+      rescheduleReasonId: v.rescheduleReasonId ?? null,
+      rescheduleReasonCustom: v.rescheduleReasonCustom ?? null,
+      overdue,
+      overdueComputation,
+      jobs: (v.vehicleJobs || []).map((j: any) => ({
+        jobCode: j.jobCode,
+        status: j.status,
+      })),
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+    };
   }
 
   private async getTaskByIdInternal(

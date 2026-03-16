@@ -7,6 +7,12 @@ export class UploadResponseDto {
   })
   id: string;
 
+  @ApiProperty({ description: 'Tenant identifier' })
+  tenantId: string;
+
+  @ApiProperty({ description: 'Object storage key' })
+  objectKey: string;
+
   @ApiProperty({
     description: 'URL to access the uploaded file',
     example:
@@ -31,6 +37,9 @@ export class UploadResponseDto {
     example: 1024,
   })
   fileSize: number;
+
+  @ApiProperty({ description: 'User who uploaded the file' })
+  uploadedBy: string;
 
   @ApiProperty({
     description: 'When the file was uploaded',

@@ -63,10 +63,13 @@ export class UploadsController {
     return {
       data: {
         id: upload.id,
+        tenantId: upload.tenantId,
+        objectKey: upload.objectKey,
         fileUrl: upload.fileUrl,
         fileName: upload.fileName,
         contentType: upload.contentType,
         fileSize: Number(upload.fileSize),
+        uploadedBy: upload.uploadedBy,
         createdAt: upload.createdAt,
       },
     };
