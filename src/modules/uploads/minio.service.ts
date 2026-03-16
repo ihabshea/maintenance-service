@@ -5,8 +5,9 @@ import * as Minio from 'minio';
 @Injectable()
 export class MinioService implements OnModuleInit {
   private readonly logger = new Logger(MinioService.name);
-  private client: Minio.Client;
+  private client: Minio.Client | null = null;
   private bucketName: string;
+  private readonly disabled: boolean;
 
   constructor(private readonly configService: ConfigService) {
     this.bucketName = this.configService.get<string>(
@@ -14,26 +15,29 @@ export class MinioService implements OnModuleInit {
       'maintenance-uploads',
     );
 
-    this.client = new Minio.Client({
-      endPoint: this.configService.get<string>('MINIO_ENDPOINT', 'localhost'),
-      port: this.configService.get<number>('MINIO_PORT', 9000),
-      useSSL:
-        this.configService.get<string>('MINIO_USE_SSL', 'false') === 'true',
-      accessKey: this.configService.get<string>(
-        'MINIO_ACCESS_KEY',
-        'minioadmin',
-      ),
-      secretKey: this.configService.get<string>(
-        'MINIO_SECRET_KEY',
-        'minioadmin123',
-      ),
-    });
+    this.disabled = this.configService.get<string>('MINIO_ENDPOINT', 'localhost') === 'disabled';
+
+    if (!this.disabled) {
+      this.client = new Minio.Client({
+        endPoint: this.configService.get<string>('MINIO_ENDPOINT', 'localhost'),
+        port: this.configService.get<number>('MINIO_PORT', 9000),
+        useSSL:
+          this.configService.get<string>('MINIO_USE_SSL', 'false') === 'true',
+        accessKey: this.configService.get<string>(
+          'MINIO_ACCESS_KEY',
+          'minioadmin',
+        ),
+        secretKey: this.configService.get<string>(
+          'MINIO_SECRET_KEY',
+          'minioadmin123',
+        ),
+      });
+    }
   }
 
   async onModuleInit() {
-    const endpoint = this.configService.get<string>('MINIO_ENDPOINT', 'localhost');
-    if (endpoint === 'disabled') {
-      this.logger.warn('MinIO is disabled — file uploads will not work');
+    if (this.disabled) {
+      this.logger.warn('MinIO is disabled — file uploads will store metadata only');
       return;
     }
     await this.ensureBucketExists();
@@ -41,9 +45,9 @@ export class MinioService implements OnModuleInit {
 
   private async ensureBucketExists(): Promise<void> {
     try {
-      const exists = await this.client.bucketExists(this.bucketName);
+      const exists = await this.client!.bucketExists(this.bucketName);
       if (!exists) {
-        await this.client.makeBucket(this.bucketName);
+        await this.client!.makeBucket(this.bucketName);
         this.logger.log(`Created bucket: ${this.bucketName}`);
       }
     } catch (error) {
@@ -57,7 +61,8 @@ export class MinioService implements OnModuleInit {
     buffer: Buffer,
     contentType: string,
   ): Promise<void> {
-    await this.client.putObject(
+    if (this.disabled) return;
+    await this.client!.putObject(
       this.bucketName,
       objectKey,
       buffer,
@@ -69,10 +74,14 @@ export class MinioService implements OnModuleInit {
   }
 
   async deleteFile(objectKey: string): Promise<void> {
-    await this.client.removeObject(this.bucketName, objectKey);
+    if (this.disabled) return;
+    await this.client!.removeObject(this.bucketName, objectKey);
   }
 
   getFileUrl(objectKey: string): string {
+    if (this.disabled) {
+      return `http://localhost:9000/${this.bucketName}/${objectKey}`;
+    }
     const endpoint = this.configService.get<string>(
       'MINIO_ENDPOINT',
       'localhost',

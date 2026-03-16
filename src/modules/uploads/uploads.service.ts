@@ -45,7 +45,7 @@ export class UploadsService {
       tenantId,
       entityType: 'upload',
       entityId: upload.id,
-      action: 'created',
+      action: 'create',
       actor,
       newValue: {
         id: upload.id,
