@@ -889,9 +889,15 @@ export class TasksService {
         label: j.label,
         sortOrder: j.sortOrder,
       })),
-      completion: task.vehicles.length > 0 && task.vehicles.every((v: any) => v.status !== 'open')
+      completion: task.vehicles.length > 0 && task.vehicles.every((v: any) => v.status === 'completed')
         ? 'completed'
-        : 'incompleted',
+        : task.vehicles.length > 0 && task.vehicles.every((v: any) => v.status !== 'open')
+          ? task.vehicles.some((v: any) => v.status === 'rescheduled')
+            ? 'rescheduled'
+            : task.vehicles.every((v: any) => v.status === 'cancelled')
+              ? 'cancelled'
+              : 'incompleted'
+          : 'incompleted',
       vehicles: task.vehicles.map((v: any) => this.buildVehicleResponse(task, v)),
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
