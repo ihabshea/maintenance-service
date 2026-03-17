@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export enum ReasonTypeDto {
   cancellation = 'cancellation',
+  rescheduling = 'rescheduling',
 }
 
 export class CreateReasonDto {
