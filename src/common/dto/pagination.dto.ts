@@ -27,8 +27,10 @@ export class PaginationQueryDto {
 export interface PaginatedResult<T> {
   data: T[];
   pagination: {
+    total: number;
     hasMore: boolean;
     nextCursor: string | null;
+    prevCursor: string | null;
   };
 }
 
@@ -48,6 +50,7 @@ export function decodeCursor(cursor: string): { id: string } | null {
 export function buildPaginatedResult<T extends { id: string }>(
   items: T[],
   limit: number,
+  opts?: { total?: number; hasPrev?: boolean; prevCursor?: string | null },
 ): PaginatedResult<T> {
   const hasMore = items.length > limit;
   const data = hasMore ? items.slice(0, limit) : items;
@@ -57,8 +60,10 @@ export function buildPaginatedResult<T extends { id: string }>(
   return {
     data,
     pagination: {
+      total: opts?.total ?? data.length,
       hasMore,
       nextCursor,
+      prevCursor: opts?.prevCursor ?? (opts?.hasPrev ? 'first' : null),
     },
   };
 }

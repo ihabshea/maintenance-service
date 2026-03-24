@@ -283,35 +283,41 @@ export class TasksService {
       where.vehicles = { some: { status: 'open' } };
     }
 
-    const tasks = await this.prisma.maintenanceTask.findMany({
-      where,
-      include: {
-        vehicles: {
-          include: {
-            vehicleJobs: true,
-            workshop: true,
-            cancellationReason: true,
-            rescheduleReason: true,
+    const [tasks, total] = await Promise.all([
+      this.prisma.maintenanceTask.findMany({
+        where,
+        include: {
+          vehicles: {
+            include: {
+              vehicleJobs: true,
+              workshop: true,
+              cancellationReason: true,
+              rescheduleReason: true,
+            },
+          },
+          jobs: {
+            orderBy: { sortOrder: 'asc' },
           },
         },
-        jobs: {
-          orderBy: { sortOrder: 'asc' },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit + 1,
-      ...(cursorData && {
-        skip: 1,
-        cursor: { id: cursorData.id },
+        orderBy: { createdAt: 'desc' },
+        take: limit + 1,
+        ...(cursorData && {
+          skip: 1,
+          cursor: { id: cursorData.id },
+        }),
       }),
-    });
+      this.prisma.maintenanceTask.count({ where }),
+    ]);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const mapped = tasks.map((task) => this.buildTaskResponse(task, today));
 
-    return buildPaginatedResult(mapped, limit);
+    return buildPaginatedResult(mapped, limit, {
+      total,
+      hasPrev: !!cursorData,
+    });
   }
 
   async getTaskById(
